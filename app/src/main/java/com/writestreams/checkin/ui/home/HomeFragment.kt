@@ -208,15 +208,60 @@ class HomeFragment : Fragment() {
         // FPSL doc:
         //   - https://www.scribd.com/document/520866936/Thermal-Label-Printer-Programming-Manual-V1-0-2
         //   - https://hackernoon.com/how-to-print-labels-with-tspl-and-javascript
-        return """
-        SIZE 6,4
-        GAP 0,0
+
+        /*
+        SIZE 4,6
+        GAP 0.25,0.25
         DIRECTION 1
         CLS
-        TEXT 10,10, "2",0,1,1, "${text}"
-        BARCODE 10,50, "128",100,1,0,2,2,"left"
-        BARCODE 310,50, "128",100,2,0,2,2,"center"
-        BARCODE 610,50, "128",100,3,0,2,2,"right"
+        TEXT 10,10,"2",0,1,1,"${text}"
+        TEXT 0,0,"1",0,5,5,"font 1, rot 0, mult 5"
+        TEXT 0,0,"1",90,8,8,"font 1, rot 90, mult 8"
+        TEXT 0,0,"1",270,6,6,"font 5, rot 270, mult 6"
+        PRINT 1
+        END
+
+
+        TEXT 100,100,"3",0,3,3,"Three"
+        TEXT 200,200,"4",0,4,4,"Four"
+        TEXT 300,300,"5",90,5,5,"Five"
+         */
+
+//        return """
+//        SIZE 4,6
+//        CLS
+//        TEXT 150,150,"2",90,2,2,"Two heads are better than one"
+//        TEXT 300,300,"3",90,3,3,"Three score and sixteen"
+//        PRINT 1
+//        END
+//        """.trimIndent()
+
+        /*
+SIZE 48 mm,25 mm
+CLS
+TEXT 10,10,"4",0,1,1,"HackerNoon"
+BARCODE 10,60,"128",90,1,0,2,2,"altospos.com"
+PRINT 1
+END
+
+TEXT 10,10,"4",0,1,1,"HackerNoon"
+TEXT 10,60,"4",0,1,1,"altospos.com"
+         */
+
+        return """
+        SIZE 59 mm,102 mm
+        GAP 5mm,0
+        DIRECTION 0
+        CLS
+        TEXT 1,10,"1",0,1,1,"Derek Williams"
+        TEXT 5,60,"2",0,2,2,"Line two"
+        TEXT 10,110,"3",90,1,1,"Line three"
+        TEXT 15,160,"4",0,1,1,"Line four"
+        TEXT 20,210,"5",0,1,1,"Line five"
+        TEXT 25,260,"6",0,1,1,"Line six"
+        TEXT 70,800,"6",90,3,3,"Line seven"
+        TEXT 120,600,"6",90,3,3,"Line eight"
+        BOX 100,100,200,200,5
         PRINT 1
         END
         """.trimIndent()
