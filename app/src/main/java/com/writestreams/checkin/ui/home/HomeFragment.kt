@@ -190,7 +190,7 @@ class HomeFragment : Fragment() {
             bluetoothSocket = device.createRfcommSocketToServiceRecord(SPP_UUID)
             bluetoothSocket?.connect()
 
-            val fpslCommand = generateFPSLCommand(labelText)
+            val fpslCommand = generateFPSLCommand("Dec 8, 2024 9:55 am", "15", "Emma Parham", labelText, "1234", "")
             bluetoothSocket?.outputStream?.write(fpslCommand.toByteArray())
 
             Toast.makeText(requireContext(), "Label Printed Successfully!", Toast.LENGTH_SHORT).show()
@@ -204,66 +204,25 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun generateFPSLCommand(text: String): String {
+    private fun generateFPSLCommand(time: String, number: String, name: String, phone: String, id: String, image: String): String {
         // FPSL doc:
         //   - https://www.scribd.com/document/520866936/Thermal-Label-Printer-Programming-Manual-V1-0-2
         //   - https://hackernoon.com/how-to-print-labels-with-tspl-and-javascript
-
-        /*
-        SIZE 4,6
-        GAP 0.25,0.25
-        DIRECTION 1
-        CLS
-        TEXT 10,10,"2",0,1,1,"${text}"
-        TEXT 0,0,"1",0,5,5,"font 1, rot 0, mult 5"
-        TEXT 0,0,"1",90,8,8,"font 1, rot 90, mult 8"
-        TEXT 0,0,"1",270,6,6,"font 5, rot 270, mult 6"
-        PRINT 1
-        END
-
-
-        TEXT 100,100,"3",0,3,3,"Three"
-        TEXT 200,200,"4",0,4,4,"Four"
-        TEXT 300,300,"5",90,5,5,"Five"
-         */
-
-//        return """
-//        SIZE 4,6
-//        CLS
-//        TEXT 150,150,"2",90,2,2,"Two heads are better than one"
-//        TEXT 300,300,"3",90,3,3,"Three score and sixteen"
-//        PRINT 1
-//        END
-//        """.trimIndent()
-
-        /*
-SIZE 48 mm,25 mm
-CLS
-TEXT 10,10,"4",0,1,1,"HackerNoon"
-BARCODE 10,60,"128",90,1,0,2,2,"altospos.com"
-PRINT 1
-END
-
-TEXT 10,10,"4",0,1,1,"HackerNoon"
-TEXT 10,60,"4",0,1,1,"altospos.com"
-         */
+        // The Mvgges PL925U printer doesn't honor DIRECTION
+        // 0,0 is bottom right with rotation 90
 
         return """
-        SIZE 59 mm,102 mm
-        GAP 5mm,0
-        DIRECTION 0
-        CLS
-        TEXT 1,10,"1",0,1,1,"Derek Williams"
-        TEXT 5,60,"2",0,2,2,"Line two"
-        TEXT 10,110,"3",90,1,1,"Line three"
-        TEXT 15,160,"4",0,1,1,"Line four"
-        TEXT 20,210,"5",0,1,1,"Line five"
-        TEXT 25,260,"6",0,1,1,"Line six"
-        TEXT 70,800,"6",90,3,3,"Line seven"
-        TEXT 120,600,"6",90,3,3,"Line eight"
-        BOX 100,100,200,200,5
-        PRINT 1
-        END
+            SIZE 59 mm,102 mm
+            GAP 5mm,0
+            CLS
+            TEXT 45,100,"1",90,2,2,"$number"
+            TEXT 45,800,"1",90,2,2,"$time"
+            TEXT 200,850,"1",90,2,2,"$image"   
+            TEXT 200,630,"2",90,3,3,"$name"  
+            TEXT 275,630,"1",90,2,2,"$phone"  
+            TEXT 400,150,"2",90,2,2,"$id"          
+            PRINT 1
+            END
         """.trimIndent()
     }
 
