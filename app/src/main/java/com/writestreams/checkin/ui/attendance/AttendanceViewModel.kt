@@ -1,13 +1,13 @@
-package com.writestreams.checkin.ui.dashboard
+package com.writestreams.checkin.ui.attendance
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
-class DashboardViewModel : ViewModel() {
+class AttendanceViewModel : ViewModel() {
 
     private val _text = MutableLiveData<String>().apply {
-        value = "This is dashboard Fragment"
+        value = "Attendance"
     }
     val text: LiveData<String> = _text
 }

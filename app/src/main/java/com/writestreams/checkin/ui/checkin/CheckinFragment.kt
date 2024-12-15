@@ -1,4 +1,4 @@
-package com.writestreams.checkin.ui.home
+package com.writestreams.checkin.ui.checkin
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
@@ -21,14 +21,14 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.writestreams.checkin.R
-import com.writestreams.checkin.databinding.FragmentHomeBinding
+import com.writestreams.checkin.databinding.FragmentCheckinBinding
 import java.util.UUID
 
-class HomeFragment : Fragment() {
+class CheckinFragment : Fragment() {
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private var bluetoothSocket: BluetoothSocket? = null
 
-    private var _binding: FragmentHomeBinding? = null
+    private var _binding: FragmentCheckinBinding? = null
     private lateinit var deviceAddressEditText: EditText
     private lateinit var labelTextEditText: EditText
     private lateinit var printButton: Button
@@ -44,8 +44,8 @@ class HomeFragment : Fragment() {
         private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
 
         // Factory method for fragment creation
-        fun newInstance(): HomeFragment {
-            return HomeFragment()
+        fun newInstance(): CheckinFragment {
+            return CheckinFragment()
         }
     }
 
@@ -69,14 +69,14 @@ class HomeFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val homeViewModel =
-            ViewModelProvider(this).get(HomeViewModel::class.java)
+        val checkinViewModel =
+            ViewModelProvider(this).get(CheckinViewModel::class.java)
 
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        _binding = FragmentCheckinBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val textView: TextView = binding.textHome
-        homeViewModel.text.observe(viewLifecycleOwner) {
+        val textView: TextView = binding.textCheckin
+        checkinViewModel.text.observe(viewLifecycleOwner) {
             textView.text = it
         }
         return root
