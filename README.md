@@ -18,4 +18,28 @@ It requires:
 - One or more commodity Bluetooth thermal label printers. We are currently using the [Mvgges PL925U](https://www.amazon.com/gp/product/B0DBYW5C3L/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&th=1)
 - 2.25" x 4" (59mm x 102mm) labels, such as [these](https://www.amazon.com/gp/product/B0CGZWZLLP/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&th=1)
 
+## To do
+- Base
+  - Offline people file management
+  - Update offline file from API
+  - Factor label printing for Checkin and Settings
+  - Theme / colors, Icons
+- Checkin
+  - Top banner - Childrens Ministry, Date, Count
+  - Add person - button, stub
+  - Search - show matching persons
+  - Search - quick search
+  - Family check-in dialog
+  - Offline checkin
+  - Online checkin
+  - Add person dialog
+- Attendance
+  - Attendees list & count
+  - Quick search / filter
+- Settings
+  - Printer selection
+  - Test print
+  - Offline sync / update
+
+
 
