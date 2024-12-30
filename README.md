@@ -4,42 +4,40 @@ Event check-in for use with Breeze CHMS.
 
 Used at [Sovereign Grace Church - Woodstock](https://sgcatlanta.org/) as a fallback for times when Breeze CHMS is unavailable or is degraded.
 
-It uses a simpler setup - only tablets connected via Bluetooth to commodity thermal label printers. It also works in a purely offline mode - no print station or network connection required.
+It uses a simpler setup - only tablets connected via Bluetooth to commodity thermal label printers.
+It also works in a purely offline mode - no print station or network connection required.
 
-If the Breeze APIs are available, it will use them for lookups and check-in; otherwise, it will use an offline directory and sync check-in data once Breeze is available.
+If the Breeze APIs are available, it will use them for lookups and check-in;
+otherwise, it will use an offline directory and sync check-in data once Breeze is available.
 
-It uses the following:
+## Dependencies
 
-- The Breeze CHMS APIs - [original (pre-aquisition)](https://app.breezechms.com/api) and [new (Tithely)](https://app.swaggerhub.com/apis/Tithe.ly/Breeze/2023-06-09)
-- [TSPL (TSC Printer Language)](https://scancode.ru/upload/iblock/937/GP_1125T-Gprinter-Barcode-Printer-TSPL-Programming-Manual.pdf) [-](https://hackernoon.com/how-to-print-labels-with-tspl-and-javascript) Also [here](https://www.icintracom.biz/redazione/libretti/libretto7028-04-1.pdf)
+Express Check-in uses the following:
+
+- The Breeze CHMS APIs - See [Breeze CHMS APIs](#breeze-chms-apis) below
+- [TSPL (TSC Printer Language)](https://scancode.ru/upload/iblock/937/GP_1125T-Gprinter-Barcode-Printer-TSPL-Programming-Manual.pdf) [-](https://hackernoon.com/how-to-print-labels-with-tspl-and-javascript) See also [this](https://www.icintracom.biz/redazione/libretti/libretto7028-04-1.pdf) and the PDFs under [docs/printer-tspl](/docs/printer-tspl/)
 
 It requires:
 - One or more Android tablets. Android 8.0 and higher is required; Android 12 (API 31) is recommended.
 - One or more commodity Bluetooth thermal label printers. We are currently using the [Mvgges PL925U](https://www.amazon.com/gp/product/B0DBYW5C3L/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&th=1)
 - 2.25" x 4" (59mm x 102mm) labels, such as [these](https://www.amazon.com/gp/product/B0CGZWZLLP/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&th=1)
 
-## To do
-- Base
-  - Offline people file management
-  - Update offline file from API
-  - Factor label printing for Checkin and Settings
-  - Theme / colors, Icons
-- Checkin
-  - Top banner - Childrens Ministry, Date, Count
-  - Add person - button, stub
-  - Search - show matching persons
-  - Search - quick search
-  - Family check-in dialog
-  - Offline checkin
-  - Online checkin
-  - Add person dialog
-- Attendance
-  - Attendees list & count
-  - Quick search / filter
-- Settings
-  - Printer selection
-  - Test print
-  - Offline sync / update
+## Breeze CHMS APIs
 
+The Breeze APIs seem to have gone through a few iterations since Breeze was acquired by Tithe.ly, including:
+- [v1 - Breeze](https://app.breezechms.com/api)
+  - The [original Breeze REST APIs](https://app.breezechms.com/api) - these are clean, well-documented, and still partially work
+- [v2 - Tithely](https://tithe.ly/api)
+  - These do not support Breeze events or check-in
+- [v2 - merge](https://app.swaggerhub.com/apis/Tithe.ly/Breeze/2023-06-09)
+  - An apparent incomplete attempt to merge the Breeze APIs into the Tithely set
+  - The [Swagger doc](https://app.swaggerhub.com/apis/Tithe.ly/Breeze/2023-06-09) has since been removed
+  - See [docs/breeze-apis](/docs/breeze-apis/) for a Postman export of this doc, from before its removal
+  - Note the description it contained:
+    - > This document is a WIP. It contains specifications for the Breeze REST API. Breeze is currently being updated to meet industry and Tithe.ly standards
+- v3 - current
+  - The `/v3` endpoints used by the current Breeze check-in web app
+  - These are undocumented and use non-REST protocols such as core ajax and websocket/pusher
 
-
+See the Postman collections under [docs/breeze-apis](/docs/breeze-apis/).
+API keys are redacted in the exported Postman collections (replaced by `...`).
