@@ -1,14 +1,10 @@
 ## To do
 
 - Base
-  - Offline people file management
-  - Update offline file from API
   - Factor label printing for Checkin and Settings
-  - Theme / colors, Icons
 - Checkin
   - Top banner - Childrens Ministry, Date, Count
   - Add person - button, stub
-  - Search - show matching persons
   - Search - quick search
   - Family check-in dialog
   - Offline checkin

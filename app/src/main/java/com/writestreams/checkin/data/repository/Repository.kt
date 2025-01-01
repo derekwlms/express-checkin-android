@@ -70,4 +70,10 @@ class Repository(context: Context) {
             personDao.getAllPersons()
         }
     }
+
+    suspend fun searchPersons(query: String): List<Person> {
+        return withContext(Dispatchers.IO) {
+            personDao.searchPersons("%$query%")
+        }
+    }
 }

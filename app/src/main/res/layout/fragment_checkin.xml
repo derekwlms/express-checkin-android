@@ -41,7 +41,11 @@
             android:layout_height="wrap_content"
             android:text="Search"/>
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/resultsRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
     </LinearLayout>
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
