@@ -10,11 +10,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.writestreams.checkin.R
 import com.writestreams.checkin.data.local.Person
 
-class PersonAdapter : ListAdapter<Person, PersonAdapter.PersonViewHolder>(PersonDiffCallback()) {
+class PersonAdapter(private val onItemClick: (Person) -> Unit) : ListAdapter<Person, PersonAdapter.PersonViewHolder>(PersonDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PersonViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_person, parent, false)
-        return PersonViewHolder(view)
+        return PersonViewHolder(view, onItemClick)
     }
 
     override fun onBindViewHolder(holder: PersonViewHolder, position: Int) {
@@ -22,11 +22,12 @@ class PersonAdapter : ListAdapter<Person, PersonAdapter.PersonViewHolder>(Person
         holder.bind(person)
     }
 
-    class PersonViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class PersonViewHolder(itemView: View, private val onItemClick: (Person) -> Unit) : RecyclerView.ViewHolder(itemView) {
         private val nameTextView: TextView = itemView.findViewById(R.id.nameTextView)
 
         fun bind(person: Person) {
-            nameTextView.text = "${person.first_name} ${person.last_name}"
+            nameTextView.text = "${person.last_name}, ${person.first_name}"
+            itemView.setOnClickListener { onItemClick(person) }
         }
     }
 

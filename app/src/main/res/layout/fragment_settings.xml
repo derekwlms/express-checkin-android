@@ -41,13 +41,26 @@
             android:hint="Label Text"
             android:inputType="text"
             android:lines="3"
-            android:text="Derek text label - Mac - Android tablet"/>
+            android:text="Test Label"/>
 
         <Button
             android:id="@+id/printButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Print Label"/>
+            android:text="Test Print"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?android:attr/listDivider"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/getUpdatesButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Get Updates"/>
 
     </LinearLayout>
 

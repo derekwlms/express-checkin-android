@@ -10,7 +10,7 @@ interface PersonDao {
     @Query("SELECT * FROM persons")
     fun getAllPersons(): List<Person>
 
-    @Query("SELECT * FROM persons WHERE first_name LIKE :query OR last_name LIKE :query")
+    @Query("SELECT * FROM persons WHERE first_name LIKE :query OR last_name LIKE :query ORDER BY last_name, first_name")
     fun searchPersons(query: String): List<Person>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

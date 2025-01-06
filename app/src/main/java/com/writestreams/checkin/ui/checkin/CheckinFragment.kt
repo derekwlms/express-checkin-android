@@ -1,17 +1,22 @@
 package com.writestreams.checkin.ui.checkin
 
+import android.app.AlertDialog
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.writestreams.checkin.R
+import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.FragmentCheckinBinding
 import kotlinx.coroutines.launch
@@ -43,15 +48,25 @@ class CheckinFragment : Fragment() {
         searchButton = view.findViewById(R.id.searchButton)
         resultsRecyclerView = view.findViewById(R.id.resultsRecyclerView)
         resultsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = PersonAdapter()
+        adapter = PersonAdapter { person -> showPersonDetailsDialog(person) }
         resultsRecyclerView.adapter = adapter
 
         searchButton.setOnClickListener {
-            val query = searchTextEditText.text.toString()
-            if (query.isNotEmpty()) {
-                searchPersons(query)
+            val searchText = searchTextEditText.text.toString().trim()
+            if (searchText.isNotEmpty()) {
+                searchPersons(searchText)
             } else {
-                Toast.makeText(requireContext(), "Please enter a search query", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Please enter a name to search", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        searchTextEditText.setOnEditorActionListener { _, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
+                searchButton.performClick()
+                true
+            } else {
+                false
             }
         }
     }
@@ -67,8 +82,31 @@ class CheckinFragment : Fragment() {
         }
     }
 
+    private fun showPersonDetailsDialog(person: Person) {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_person_checkin, null)
+        val personDetailsTextView: TextView = dialogView.findViewById(R.id.personDetailsTextView)
+        personDetailsTextView.text = "${person.first_name} ${person.last_name}"
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+
+        dialogView.findViewById<Button>(R.id.cancelButton).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialogView.findViewById<Button>(R.id.doneButton).setOnClickListener {
+            // Handle done action if needed
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
+
 }

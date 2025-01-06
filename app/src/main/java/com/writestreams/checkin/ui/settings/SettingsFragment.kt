@@ -20,9 +20,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.writestreams.checkin.R
+import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.FragmentSettingsBinding
 import com.writestreams.checkin.ui.checkin.CheckinFragment
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 class SettingsFragment : Fragment() {
@@ -30,6 +33,8 @@ class SettingsFragment : Fragment() {
     private lateinit var deviceAddressEditText: EditText
     private lateinit var labelTextEditText: EditText
     private lateinit var printButton: Button
+
+    private lateinit var repository: Repository
 
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private var bluetoothSocket: BluetoothSocket? = null
@@ -97,6 +102,21 @@ class SettingsFragment : Fragment() {
         printButton.setOnClickListener {
 //            checkBluetoothPermissions()
             requestPermissions()
+        }
+
+        repository = Repository(requireContext())
+
+        val getUpdatesButton: Button = view.findViewById(R.id.getUpdatesButton)
+        getUpdatesButton.setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    repository.fetchAndCachePersons()
+                    val cachedPersons = repository.getCachedPersons()
+                    Toast.makeText(requireContext(), "Fetched ${cachedPersons.size} persons", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Error fetching updates", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
