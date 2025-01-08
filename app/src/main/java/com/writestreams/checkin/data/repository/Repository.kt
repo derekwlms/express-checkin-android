@@ -9,11 +9,13 @@ import com.writestreams.checkin.data.network.BreezeChmsApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -22,7 +24,14 @@ class Repository(context: Context) {
     private val personDao: PersonDao
 
     init {
+        val client = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+
         val retrofit = Retrofit.Builder()
+            .client(client)
             .baseUrl("https://sgcwoodstock.breezechms.com/api/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()

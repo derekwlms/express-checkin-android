@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -114,6 +115,7 @@ class SettingsFragment : Fragment() {
                     val cachedPersons = repository.getCachedPersons()
                     Toast.makeText(requireContext(), "Fetched ${cachedPersons.size} persons", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
+                    Log.e("SettingsFragment", "Error fetching updates", e)
                     Toast.makeText(requireContext(), "Error fetching updates", Toast.LENGTH_SHORT).show()
                 }
             }

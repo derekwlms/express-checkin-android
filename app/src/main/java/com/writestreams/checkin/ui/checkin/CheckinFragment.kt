@@ -85,7 +85,7 @@ class CheckinFragment : Fragment() {
     private fun showPersonDetailsDialog(person: Person) {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_person_checkin, null)
         val personDetailsTextView: TextView = dialogView.findViewById(R.id.personDetailsTextView)
-        personDetailsTextView.text = "${person.first_name} ${person.last_name}"
+        personDetailsTextView.text = "${person.first_name} ${person.last_name} - ${person.toString()}"
 
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)
