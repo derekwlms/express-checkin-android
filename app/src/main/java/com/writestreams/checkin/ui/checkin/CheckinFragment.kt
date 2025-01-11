@@ -48,7 +48,7 @@ class CheckinFragment : Fragment() {
         searchButton = view.findViewById(R.id.searchButton)
         resultsRecyclerView = view.findViewById(R.id.resultsRecyclerView)
         resultsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = PersonAdapter { person -> showPersonDetailsDialog(person) }
+        adapter = PersonAdapter { person -> showFamilyCheckinDialog(person) }
         resultsRecyclerView.adapter = adapter
 
         searchButton.setOnClickListener {
@@ -82,26 +82,9 @@ class CheckinFragment : Fragment() {
         }
     }
 
-    private fun showPersonDetailsDialog(person: Person) {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_person_checkin, null)
-        val personDetailsTextView: TextView = dialogView.findViewById(R.id.personDetailsTextView)
-        personDetailsTextView.text = "${person.first_name} ${person.last_name} - ${person.toString()}"
-
-        val dialog = AlertDialog.Builder(requireContext())
-            .setView(dialogView)
-            .setCancelable(false)
-            .create()
-
-        dialogView.findViewById<Button>(R.id.cancelButton).setOnClickListener {
-            dialog.dismiss()
-        }
-
-        dialogView.findViewById<Button>(R.id.doneButton).setOnClickListener {
-            // Handle done action if needed
-            dialog.dismiss()
-        }
-
-        dialog.show()
+    private fun showFamilyCheckinDialog(person: Person) {
+        val dialogFragment = FamilyCheckinDialogFragment(person)
+        dialogFragment.show(parentFragmentManager, "FamilyCheckinDialogFragment")
     }
 
     override fun onDestroyView() {
