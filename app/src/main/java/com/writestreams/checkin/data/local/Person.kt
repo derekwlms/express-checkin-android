@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.google.gson.annotations.SerializedName
+import java.time.LocalDateTime
 
 @Entity(tableName = "persons")
 @TypeConverters(Converters::class)
@@ -17,7 +18,8 @@ data class Person(
     val maiden_name: String,
     val path: String,
     val details: PersonDetails,
-    val family: List<FamilyMember>
+    val family: List<FamilyMember>,
+    var checkinDateTime: LocalDateTime?
 )
 
 data class PersonDetails(
@@ -55,7 +57,8 @@ data class FamilyMember(
     val role_name: String,
     val role_id: String,
     val order: String,
-    val details: FamilyMemberDetails
+    val details: FamilyMemberDetails,
+    var checkinDateTime: LocalDateTime?
 )
 
 data class FamilyMemberDetails(

@@ -85,4 +85,10 @@ class Repository(context: Context) {
             personDao.searchPersons("%$query%")
         }
     }
+
+    suspend fun updatePerson(person: Person) {
+        withContext(Dispatchers.IO) {
+            personDao.update(person)
+        }
+    }
 }

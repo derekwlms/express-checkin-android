@@ -3,8 +3,12 @@ package com.writestreams.checkin.data.local
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class Converters {
+    private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+
     @TypeConverter
     fun fromPersonDetails(details: PersonDetails): String {
         return Gson().toJson(details)
@@ -36,5 +40,15 @@ class Converters {
     fun toPhoneDetailsMap(phoneDetailsString: String): Map<String, List<PhoneDetail>> {
         val type = object : TypeToken<Map<String, List<PhoneDetail>>>() {}.type
         return Gson().fromJson(phoneDetailsString, type)
+    }
+
+    @TypeConverter
+    fun fromLocalDateTime(value: LocalDateTime?): String? {
+        return value?.format(formatter)
+    }
+
+    @TypeConverter
+    fun toLocalDateTime(value: String?): LocalDateTime? {
+        return value?.let { LocalDateTime.parse(it, formatter) }
     }
 }

@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 
 @Dao
 interface PersonDao {
@@ -15,4 +16,7 @@ interface PersonDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertAll(persons: List<Person>)
+
+    @Update
+    fun update(person: Person)
 }
