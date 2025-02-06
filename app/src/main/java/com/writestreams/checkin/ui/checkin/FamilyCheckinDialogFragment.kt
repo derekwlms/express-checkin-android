@@ -49,6 +49,7 @@ class FamilyCheckinDialogFragment(private val person: Person) : DialogFragment()
 
         binding.doneButton.setOnClickListener {
             val checkedFamilyMembers = adapter.getCheckedFamilyMembers()
+            // TODO Also update Breeze and print the labels. Move this to a service
             val currentDateTime = LocalDateTime.now()
             for (member in checkedFamilyMembers) {
                 member.checkinDateTime = currentDateTime

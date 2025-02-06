@@ -4,35 +4,66 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
+import android.widget.SearchView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.writestreams.checkin.data.local.Person
+import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.FragmentAttendanceBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AttendanceFragment : Fragment() {
 
     private var _binding: FragmentAttendanceBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
+    private lateinit var repository: Repository
+    private lateinit var adapter: CheckedInPersonAdapter
+    private var personsList: List<Person> = listOf()
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val attendanceViewModel =
-            ViewModelProvider(this)[AttendanceViewModel::class.java]
-
         _binding = FragmentAttendanceBinding.inflate(inflater, container, false)
-        val root: View = binding.root
+        return binding.root
+    }
 
-        val textView: TextView = binding.textAttendance
-        attendanceViewModel.text.observe(viewLifecycleOwner) {
-            textView.text = it
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        repository = Repository(requireContext())
+        adapter = CheckedInPersonAdapter(personsList)
+        binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerView.adapter = adapter
+
+        fetchCheckedInPersons()
+
+        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                val filteredList = personsList.filter {
+                    it.first_name.contains(newText ?: "", ignoreCase = true) ||
+                            it.last_name.contains(newText ?: "", ignoreCase = true)
+                }
+                adapter.updateList(filteredList)
+                return true
+            }
+        })
+    }
+
+    private fun fetchCheckedInPersons() {
+        lifecycleScope.launch {
+            personsList = withContext(Dispatchers.IO) {
+                repository.getCheckedInPersons()
+            }
+            adapter.updateList(personsList)
         }
-        return root
     }
 
     override fun onDestroyView() {
