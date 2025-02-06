@@ -3,6 +3,7 @@ package com.writestreams.checkin.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
+import com.google.gson.annotations.SerializedName
 
 @Entity(tableName = "persons")
 @TypeConverters(Converters::class)
@@ -21,8 +22,8 @@ data class Person(
 
 data class PersonDetails(
     val person_id: String,
-    val phoneDetails: Map<String, List<PhoneDetail>>,
-    val emailDetails: Map<String, List<EmailDetail>>
+    @SerializedName("194881525") val phoneDetails: List<PhoneDetail>,
+    @SerializedName("951543614") val emailDetails: List<EmailDetail>
 )
 
 data class PhoneDetail(
