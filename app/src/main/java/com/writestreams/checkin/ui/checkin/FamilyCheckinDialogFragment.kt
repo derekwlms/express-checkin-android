@@ -1,26 +1,21 @@
 package com.writestreams.checkin.ui.checkin
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.writestreams.checkin.data.local.Person
-import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.DialogFamilyCheckinBinding
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import java.time.LocalDateTime
+import com.writestreams.checkin.service.CheckinService
 
 class FamilyCheckinDialogFragment(private val person: Person) : DialogFragment() {
 
     private var _binding: DialogFamilyCheckinBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: FamilyMemberAdapter
-    private lateinit var repository: Repository
+    private lateinit var checkinService: CheckinService
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -33,7 +28,7 @@ class FamilyCheckinDialogFragment(private val person: Person) : DialogFragment()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        repository = Repository(requireContext())
+        checkinService = CheckinService(requireContext())
 
         binding.personNameTextView.text = "${person.first_name} ${person.last_name}"
 //        binding.personDetailsTextView.text = person.toString()
@@ -49,16 +44,9 @@ class FamilyCheckinDialogFragment(private val person: Person) : DialogFragment()
 
         binding.doneButton.setOnClickListener {
             val checkedFamilyMembers = adapter.getCheckedFamilyMembers()
-            // TODO Also update Breeze and print the labels. Move this to a service
-            val currentDateTime = LocalDateTime.now()
-            for (member in checkedFamilyMembers) {
-                member.checkinDateTime = currentDateTime
-                Log.d("FamilyCheckin", "Checked in family member: ${member.details.first_name} ${member.details.last_name} at $currentDateTime")
-            }
-            person.checkinDateTime = currentDateTime
-            CoroutineScope(Dispatchers.IO).launch {
-                repository.updatePerson(person)
-            }
+            val deviceAddress = "66:32:D7:D6:ED:10"
+            val labelText = "${person.first_name} ${person.last_name}"
+            checkinService.checkinFamily(person, checkedFamilyMembers, deviceAddress, labelText)
             dismiss()
         }
     }
