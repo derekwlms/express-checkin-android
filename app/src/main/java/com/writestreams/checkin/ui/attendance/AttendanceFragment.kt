@@ -77,6 +77,7 @@ class AttendanceFragment : Fragment() {
                 repository.getCheckedInPersons()
             }
             adapter.updateList(personsList)
+            binding.attendeesBadge.text = personsList.size.toString()
         }
     }
 
