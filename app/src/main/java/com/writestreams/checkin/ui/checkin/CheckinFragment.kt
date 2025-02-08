@@ -1,7 +1,8 @@
 package com.writestreams.checkin.ui.checkin
 
-import android.app.AlertDialog
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -9,7 +10,6 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -32,8 +32,7 @@ class CheckinFragment : Fragment() {
     private val binding get() = _binding!!
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentCheckinBinding.inflate(inflater, container, false)
@@ -69,6 +68,19 @@ class CheckinFragment : Fragment() {
                 false
             }
         }
+
+        searchTextEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val searchText = s.toString().trim()
+                if (searchText.length >= 4) {
+                    searchPersons(searchText)
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
     }
 
     private fun searchPersons(query: String) {
@@ -91,5 +103,4 @@ class CheckinFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
-
 }

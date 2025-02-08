@@ -20,7 +20,29 @@ data class Person(
     val details: PersonDetails,
     val family: List<FamilyMember>,
     var checkinDateTime: LocalDateTime?
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Person
+
+        if (id != other.id) return false
+        if (first_name != other.first_name) return false
+        if (last_name != other.last_name) return false
+        if (family != other.family) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + first_name.hashCode()
+        result = 31 * result + last_name.hashCode()
+        result = 31 * result + family.hashCode()
+        return result
+    }
+}
 
 data class PersonDetails(
     val person_id: String,
@@ -59,7 +81,27 @@ data class FamilyMember(
     val order: String,
     val details: FamilyMemberDetails,
     var checkinDateTime: LocalDateTime?
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as FamilyMember
+
+        if (id != other.id) return false
+        if (person_id != other.person_id) return false
+        if (details != other.details) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + person_id.hashCode()
+        result = 31 * result + details.hashCode()
+        return result
+    }
+}
 
 data class FamilyMemberDetails(
     val id: String,

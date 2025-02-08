@@ -3,7 +3,6 @@
 - Checkin
   - Top banner - Childrens Ministry, Date, Count
   - Add person - button, stub
-  - Search - quick search
   - Online checkin
   - Add person dialog
 - Attendance

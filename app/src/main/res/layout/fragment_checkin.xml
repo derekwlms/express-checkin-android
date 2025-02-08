@@ -29,7 +29,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Type a name then tap Search"
+            android:text="Enter a first or last name to search"
             android:textSize="16sp"
             android:paddingBottom="8dp"
             android:gravity="center"/>
@@ -38,7 +38,7 @@
             android:id="@+id/searchTextEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter a first or last name..."
+            android:hint="Type a first or last name..."
             android:inputType="text"
             android:imeOptions="actionSearch"
             android:lines="3"
