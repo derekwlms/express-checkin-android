@@ -7,10 +7,9 @@
   - Add person dialog
 - Attendance
   - Attendees list & count
-  - Print and email the attendees list - buttons
 - Print service
   - Multiple label formats, content - attendees list
   - Parent label, parent phone number
 - Settings
   - Printer selection
-  - Save selected device address
+  - Save selected device address, fix hardcoded deviceAddress

@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.FragmentAttendanceBinding
+import com.writestreams.checkin.service.AttendanceService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -21,6 +22,7 @@ class AttendanceFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var repository: Repository
     private lateinit var adapter: CheckedInPersonAdapter
+    private lateinit var attendanceService: AttendanceService
     private var personsList: List<Person> = listOf()
 
     override fun onCreateView(
@@ -35,6 +37,7 @@ class AttendanceFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         repository = Repository(requireContext())
+        attendanceService = AttendanceService(requireContext())
         adapter = CheckedInPersonAdapter(personsList)
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerView.adapter = adapter
@@ -55,6 +58,17 @@ class AttendanceFragment : Fragment() {
                 return true
             }
         })
+
+        binding.printButton.setOnClickListener {
+            val attendanceList = personsList.map { "${it.first_name} ${it.last_name}" }
+            attendanceService.printAttendanceList(attendanceList)
+        }
+
+        binding.emailButton.setOnClickListener {
+            val attendanceList = personsList.map { "${it.first_name} ${it.last_name}" }
+            val recipient = "derekwlms@gmail.com"
+            attendanceService.emailAttendanceList(attendanceList, recipient)
+        }
     }
 
     private fun fetchCheckedInPersons() {
