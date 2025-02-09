@@ -22,7 +22,7 @@ class BluetoothPrintService(private val context: Context) {
         private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     }
 
-    suspend fun printLabel(deviceAddress: String, labelText: String) {
+    suspend fun printLabel(labelText: String, deviceAddress: String = "66:32:D7:D6:ED:10") {
         withContext(Dispatchers.IO) {
             try {
                 val device: BluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceAddress)

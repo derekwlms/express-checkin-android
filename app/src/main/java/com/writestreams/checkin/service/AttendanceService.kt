@@ -12,10 +12,9 @@ class AttendanceService(private val context: Context) {
     private val bluetoothPrintService = BluetoothPrintService(context)
 
     fun printAttendanceList(attendanceList: List<String>) {
-        val deviceAddress = "66:32:D7:D6:ED:10"
         val labelText = attendanceList.joinToString(separator = "\n")
         CoroutineScope(Dispatchers.IO).launch {
-            bluetoothPrintService.printLabel(deviceAddress, labelText)
+            bluetoothPrintService.printLabel(labelText)
         }
         Toast.makeText(context, "Printed the attendance list", Toast.LENGTH_SHORT).show()
     }

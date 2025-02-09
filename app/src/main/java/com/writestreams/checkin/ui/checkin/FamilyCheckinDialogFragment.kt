@@ -44,9 +44,7 @@ class FamilyCheckinDialogFragment(private val person: Person) : DialogFragment()
 
         binding.doneButton.setOnClickListener {
             val checkedFamilyMembers = adapter.getCheckedFamilyMembers()
-            val deviceAddress = "66:32:D7:D6:ED:10"
-            val labelText = "${person.first_name} ${person.last_name}"
-            checkinService.checkinFamily(person, checkedFamilyMembers, deviceAddress, labelText)
+            checkinService.checkinFamily(familyMembers, checkedFamilyMembers)
             dismiss()
         }
     }

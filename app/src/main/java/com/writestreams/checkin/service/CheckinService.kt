@@ -15,18 +15,42 @@ class CheckinService(private val context: Context) {
     private val repository = Repository(context)
     private val bluetoothPrintService = BluetoothPrintService(context)
 
-    fun checkinFamily(person: Person, checkedFamilyMembers: Set<FamilyMember>, deviceAddress: String, labelText: String) {
+    companion object {
+        const val FAMILY_ROLE_CHILD = "2"
+    }
+
+    fun checkinFamily(allFamilyMembers: List<FamilyMember>, checkedFamilyMembers: Set<FamilyMember>) {
         val currentDateTime = LocalDateTime.now()
-        for (member in checkedFamilyMembers) {
-            member.checkinDateTime = currentDateTime
-            Log.d("checkinFamily", "Checked in family member: ${member.details.first_name} ${member.details.last_name} at $currentDateTime")
-        }
-        person.checkinDateTime = currentDateTime
         CoroutineScope(Dispatchers.IO).launch {
-            // TODO: Also update Breeze
-            // TODO: Print parent and child labels
-            repository.updatePerson(person)
-            bluetoothPrintService.printLabel(deviceAddress, labelText)
+            val parentFamilyMembers = allFamilyMembers.filter { it.family_role_id != FAMILY_ROLE_CHILD }
+            val parentPersons = parentFamilyMembers.map { repository.getPersonById(it.person_id) }
+            printParentLabel(parentPersons, currentDateTime)
+            for (member in checkedFamilyMembers) {
+                val familyMemberPerson = repository.getPersonById(member.person_id)
+                familyMemberPerson?.let {
+                    it.checkinDateTime = currentDateTime
+                    repository.updatePerson(it)
+                    printChildLabel(it, currentDateTime)
+                    checkInWithBreeze(it, parentPersons, currentDateTime)
+                }
+            }
         }
+    }
+
+    private suspend fun printParentLabel(parentPersons: List<Person?>, currentDateTime: LocalDateTime) {
+        val labelText = parentPersons.joinToString(separator = "\n") { person ->
+            "${person?.first_name} ${person?.last_name}\nChecked in at $currentDateTime"
+        }
+        bluetoothPrintService.printLabel(labelText)
+    }
+
+    private suspend fun printChildLabel(child: Person, currentDateTime: LocalDateTime) {
+        val labelText = "${child.first_name} ${child.last_name}"
+        bluetoothPrintService.printLabel(labelText)
+    }
+
+    private suspend fun checkInWithBreeze(child: Person, parentPersons: List<Person?>, currentDateTime: LocalDateTime) {
+        Log.d("checkinFamily", "Checked in child: ${child.first_name} ${child.last_name} at $currentDateTime")
+        // TODO Finish this once we find an API that works
     }
 }

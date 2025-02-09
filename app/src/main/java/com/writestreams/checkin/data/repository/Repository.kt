@@ -80,6 +80,12 @@ class Repository(context: Context) {
         }
     }
 
+    suspend fun getPersonById(personId: String): Person? {
+        return withContext(Dispatchers.IO) {
+            personDao.getPersonById(personId)
+        }
+    }
+
     suspend fun getCheckedInPersons(): List<Person> {
         return withContext(Dispatchers.IO) {
             personDao.getCheckedInPersons()

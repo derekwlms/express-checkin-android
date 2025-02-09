@@ -100,7 +100,7 @@ class SettingsFragment : Fragment() {
         }
 
         lifecycleScope.launch {
-            bluetoothPrintService.printLabel(deviceAddress, labelText)
+            bluetoothPrintService.printLabel(labelText, deviceAddress)
         }
     }
 

@@ -11,6 +11,9 @@ interface PersonDao {
     @Query("SELECT * FROM persons")
     fun getAllPersons(): List<Person>
 
+    @Query("SELECT * FROM persons WHERE id = :id")
+    fun getPersonById(id: String): Person?
+
     @Query("SELECT * FROM persons WHERE checkinDateTime IS NOT NULL")
     fun getCheckedInPersons(): List<Person>
 
