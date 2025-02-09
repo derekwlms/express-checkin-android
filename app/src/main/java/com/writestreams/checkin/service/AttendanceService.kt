@@ -14,7 +14,7 @@ class AttendanceService(private val context: Context) {
 
     fun printAttendanceList(attendanceList: List<String>) {
         val labelText = attendanceList.joinToString(separator = "\n")
-        val label = AttendanceLabel("", "15", labelText, "parent", "", "")
+        val label = AttendanceLabel("", "", labelText, labelText, "", "")
         CoroutineScope(Dispatchers.IO).launch {
             bluetoothPrintService.printLabel(label)
         }

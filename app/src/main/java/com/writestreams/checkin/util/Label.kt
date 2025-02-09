@@ -43,8 +43,8 @@ class ParentLabel(
             CLS
             TEXT 45,100,"1",90,2,2,"$number"
             TEXT 45,800,"1",90,2,2,"$time"
-            TEXT 200,850,"1",90,2,2,"$image"
-            TEXT 200,630,"2",90,3,3,"$name"
+            TEXT 200,850,"1",90,2,2,""
+            TEXT 200,630,"1",90,2,2,"$name"
             TEXT 275,630,"1",90,2,2,"$phone"
             TEXT 400,150,"2",90,2,2,"$id"
             PRINT 1

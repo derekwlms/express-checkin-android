@@ -19,7 +19,9 @@ data class Person(
     val path: String,
     val details: PersonDetails,
     val family: List<FamilyMember>,
-    var checkinDateTime: LocalDateTime?
+    var checkinDateTime: LocalDateTime?,
+    var checkinCode: String? = "",
+    var checkinCounter: String? = ""
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
