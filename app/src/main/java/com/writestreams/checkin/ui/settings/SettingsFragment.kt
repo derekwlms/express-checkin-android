@@ -1,7 +1,6 @@
 package com.writestreams.checkin.ui.settings
 
 import android.Manifest
-import android.bluetooth.BluetoothAdapter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -11,18 +10,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.writestreams.checkin.R
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.FragmentSettingsBinding
 import com.writestreams.checkin.service.BluetoothPrintService
+import com.writestreams.checkin.util.Label
 import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment() {
@@ -33,22 +31,10 @@ class SettingsFragment : Fragment() {
 
     private lateinit var repository: Repository
 
-    private lateinit var bluetoothAdapter: BluetoothAdapter
-
-    // TODO - A listener might be handy. If I decide not to use it, remove it
-//    interface ThermalPrinterListener {
-//        fun onPrintSuccess()
-//        fun onPrintError(message: String)
-//    }
-//
-//    private var printerListener: ThermalPrinterListener? = null
+    // TODO - Do we want to restore the ThermalPrinterListener here?
 
     companion object {
         private lateinit var bluetoothPrintService: BluetoothPrintService
-
-//        fun newInstance(): CheckinFragment {
-//            return CheckinFragment()
-//        }
     }
 
     // Permission request launcher
@@ -70,31 +56,21 @@ class SettingsFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val settingsViewModel =
-            ViewModelProvider(this).get(SettingsViewModel::class.java)
-
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
-
-        val textView: TextView = binding.textSettings
-        settingsViewModel.text.observe(viewLifecycleOwner) {
-            textView.text = it
-        }
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-//        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
         bluetoothPrintService = BluetoothPrintService(requireContext())
 
-        // Find views
         deviceAddressEditText = view.findViewById(R.id.deviceAddressEditText)
         labelTextEditText = view.findViewById(R.id.labelTextEditText)
         printButton = view.findViewById(R.id.printButton)
 
         printButton.setOnClickListener {
-//            checkBluetoothPermissions()
+            // TODO - Do we want checkBluetoothPermissions() here? - see 2/8/25 ~ 8:50 pm commit
             requestPermissions()
         }
 
@@ -117,28 +93,6 @@ class SettingsFragment : Fragment() {
                         .show()
                 }
             }
-        }
-    }
-
-    private fun checkBluetoothPermissions() {
-        val permissions = arrayOf(
-            Manifest.permission.BLUETOOTH,
-            Manifest.permission.BLUETOOTH_ADMIN,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.BLUETOOTH_CONNECT
-        )
-
-        val unGrantedPermissions = permissions.filter { permission ->
-            ContextCompat.checkSelfPermission(
-                requireContext(),
-                permission
-            ) != PackageManager.PERMISSION_GRANTED
-        }
-
-        if (unGrantedPermissions.isNotEmpty()) {
-            multiplePermissionLauncher.launch(unGrantedPermissions.toTypedArray())
-        } else {
-            connectAndPrint()
         }
     }
 
@@ -168,24 +122,8 @@ class SettingsFragment : Fragment() {
         }
     }
 
-    // Handle permission result for older Android versions
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        if (requestCode == 100) {
-            if (grantResults.all {
-                    it == PackageManager.PERMISSION_GRANTED
-                }) {
-                connectAndPrint()
-            } else {
-                // TODO: Handle denied permissions
-            }
-        }
-    }
+    // TODO - Do we want to support older Android versions?
+    // If so, see onRequestPermissionsResult in the 2/8/25 ~ 8:50 pm commit
 
     private fun connectAndPrint() {
         val deviceAddress = deviceAddressEditText.text.toString()
@@ -197,27 +135,13 @@ class SettingsFragment : Fragment() {
         }
 
         lifecycleScope.launch {
-            bluetoothPrintService.printLabel(labelText, deviceAddress)
+            val label = Label("", "", labelText, deviceAddress, "", "")
+            bluetoothPrintService.printLabel(label, deviceAddress)
         }
     }
-
-//    override fun onAttach(context: Context) {
-//        super.onAttach(context)
-//        if (context is ThermalPrinterListener) {
-//            printerListener = context
-//            lifecycleScope.launch {
-//                bluetoothPrintService.printLabel("test label")
-//            }
-//        }
-//    }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
-
-//    override fun onDetach() {
-//        super.onDetach()
-//        printerListener = null
-//    }
 }

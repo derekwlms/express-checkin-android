@@ -3,6 +3,7 @@ package com.writestreams.checkin.service
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import com.writestreams.checkin.util.AttendanceLabel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -13,8 +14,9 @@ class AttendanceService(private val context: Context) {
 
     fun printAttendanceList(attendanceList: List<String>) {
         val labelText = attendanceList.joinToString(separator = "\n")
+        val label = AttendanceLabel("", "15", labelText, "parent", "", "")
         CoroutineScope(Dispatchers.IO).launch {
-            bluetoothPrintService.printLabel(labelText)
+            bluetoothPrintService.printLabel(label)
         }
         Toast.makeText(context, "Printed the attendance list", Toast.LENGTH_SHORT).show()
     }
@@ -24,7 +26,8 @@ class AttendanceService(private val context: Context) {
             type = "text/plain"
             putExtra(Intent.EXTRA_EMAIL, arrayOf(recipient))
             putExtra(Intent.EXTRA_SUBJECT, "SGC Children's Ministry - Attendance List")
-            putExtra(Intent.EXTRA_TEXT, "The list will go here...")
+            val combinedList = attendanceList.joinToString(separator = "\n")
+            putExtra(Intent.EXTRA_TEXT, combinedList)
         }
         context.startActivity(Intent.createChooser(emailIntent, "Email Attendance List"))
         Toast.makeText(context, "Emailed the attendance list", Toast.LENGTH_SHORT).show()

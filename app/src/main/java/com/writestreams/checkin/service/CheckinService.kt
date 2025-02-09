@@ -5,6 +5,8 @@ import android.util.Log
 import com.writestreams.checkin.data.local.FamilyMember
 import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.data.repository.Repository
+import com.writestreams.checkin.util.ChildLabel
+import com.writestreams.checkin.util.ParentLabel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -38,15 +40,16 @@ class CheckinService(private val context: Context) {
     }
 
     private suspend fun printParentLabel(parentPersons: List<Person?>, currentDateTime: LocalDateTime) {
-        val labelText = parentPersons.joinToString(separator = "\n") { person ->
-            "${person?.first_name} ${person?.last_name}\nChecked in at $currentDateTime"
-        }
-        bluetoothPrintService.printLabel(labelText)
+        val parentName = "${parentPersons[0]?.first_name} ${parentPersons[0]?.last_name}"
+        val parent2Name = "${parentPersons[1]?.first_name} ${parentPersons[1]?.last_name}"
+        val label = ParentLabel(currentDateTime.toString(), "15", parentName, parent2Name, "1234", "")
+        bluetoothPrintService.printLabel(label)
     }
 
     private suspend fun printChildLabel(child: Person, currentDateTime: LocalDateTime) {
-        val labelText = "${child.first_name} ${child.last_name}"
-        bluetoothPrintService.printLabel(labelText)
+        val name = "${child.first_name} ${child.last_name}"
+        val label = ChildLabel(currentDateTime.toString(), "15", name, "parent", "1234", "")
+        bluetoothPrintService.printLabel(label)
     }
 
     private suspend fun checkInWithBreeze(child: Person, parentPersons: List<Person?>, currentDateTime: LocalDateTime) {

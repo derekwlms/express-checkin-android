@@ -9,7 +9,7 @@ import android.content.pm.PackageManager
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import com.writestreams.checkin.util.LabelFormatter
+import com.writestreams.checkin.util.Label
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.UUID
@@ -23,7 +23,7 @@ class BluetoothPrintService(private val context: Context) {
         private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     }
 
-    suspend fun printLabel(labelText: String, deviceAddress: String = "66:32:D7:D6:ED:10") {
+    suspend fun printLabel(label: Label, deviceAddress: String = "66:32:D7:D6:ED:10") {
         withContext(Dispatchers.IO) {
             try {
                 val device: BluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceAddress)
@@ -42,9 +42,7 @@ class BluetoothPrintService(private val context: Context) {
                 }
                 bluetoothSocket = device.createRfcommSocketToServiceRecord(SPP_UUID)
                 bluetoothSocket?.connect()
-
-                val fpslCommand = LabelFormatter.generateFPSLCommand("Dec 8, 2024 9:55 am", "15", "Emma Parham", labelText, "1234", "")
-                bluetoothSocket?.outputStream?.write(fpslCommand.toByteArray())
+                bluetoothSocket?.outputStream?.write(label.asFPSLCommand().toByteArray())
 
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Label Printed Successfully!", Toast.LENGTH_SHORT).show()
