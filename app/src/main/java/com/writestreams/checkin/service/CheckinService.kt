@@ -59,7 +59,7 @@ class CheckinService(private val context: Context) {
 
         val childName = "${child.first_name} ${child.last_name}"
         val childLabel = ChildLabel(formattedDateTime, child.checkinCounter!!,
-            childName, "${parentName} - ${phoneNumber} - ${parent2Name}", child.checkinCode!!, "")
+            childName, phoneNumber, child.checkinCode!!, "$parentName - $parent2Name")
         bluetoothPrintService.printLabel(childLabel)
     }
 

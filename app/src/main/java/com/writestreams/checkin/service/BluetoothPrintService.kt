@@ -1,6 +1,7 @@
 package com.writestreams.checkin.service
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
@@ -23,7 +24,9 @@ class BluetoothPrintService(private val context: Context) {
         private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     }
 
-    suspend fun printLabel(label: Label, deviceAddress: String = "66:32:D7:D6:ED:10") {
+    suspend fun printLabel(label: Label, deviceAddress: String = "66:32:F6:7A:4D:65") {
+        // 66:32:F6:7A:4D:65 - new
+        // 66:32:D7:D6:ED:10 - sgc
         withContext(Dispatchers.IO) {
             try {
                 val device: BluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceAddress)
@@ -55,6 +58,31 @@ class BluetoothPrintService(private val context: Context) {
                 Log.e("BluetoothPrintService", errorMessage, e)
             } finally {
                 bluetoothSocket?.close()
+            }
+        }
+    }
+
+    // For development:
+    suspend fun logPairedDevices() {
+        withContext(Dispatchers.IO) {
+            try {
+                if (ActivityCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.BLUETOOTH_CONNECT
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    // Consider calling ActivityCompat#requestPermissions here... and then...
+                    Log.e("BluetoothPrintService", "Bluetooth Connect permission not granted")
+                } else {
+                    for (device in bluetoothAdapter.bondedDevices) {
+                        Log.i(
+                            "BluetoothPrintService",
+                            "Paired device: ${device.name} - ${device.address}"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("BluetoothPrintService", "Error getting paired devices", e)
             }
         }
     }
