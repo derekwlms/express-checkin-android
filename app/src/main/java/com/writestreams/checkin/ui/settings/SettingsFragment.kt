@@ -135,8 +135,8 @@ class SettingsFragment : Fragment() {
         }
 
         lifecycleScope.launch {
-            val label = Label("", "", labelText, deviceAddress, "", "")
-            bluetoothPrintService.logPairedDevices()  // determine deviceAddress (MAC address)
+            val label = Label(labelText, deviceAddress)
+            // bluetoothPrintService.logPairedDevices()  // determine deviceAddress (MAC address)
             // Paired device: BlueTooth Printer - 66:32:F6:7A:4D:65
             // Paired device: BlueTooth Printer - 66:32:D7:D6:ED:10
             bluetoothPrintService.printLabel(label, deviceAddress)

@@ -52,8 +52,9 @@ class CheckinService(private val context: Context) {
         val phoneNumber = parentPersons[0]?.details?.phoneDetails?.firstOrNull {
             !it.phone_number.isNullOrEmpty()
         }?.phone_number ?: ""
-        val parentLabel = ParentLabel(formattedDateTime, "",
-            parentName, parent2Name, child.checkinCode!!, "")
+        val parentLabel = ParentLabel(formattedDateTime,
+            parentName, parent2Name, child.checkinCode!!,
+            listOf("${child.first_name} ${child.last_name}"))
         if (printParent)
             bluetoothPrintService.printLabel(parentLabel)
 

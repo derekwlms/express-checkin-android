@@ -7,14 +7,16 @@ import com.writestreams.checkin.util.AttendanceLabel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class AttendanceService(private val context: Context) {
 
     private val bluetoothPrintService = BluetoothPrintService(context)
 
     fun printAttendanceList(attendanceList: List<String>) {
-        val labelText = attendanceList.joinToString(separator = "\n")
-        val label = AttendanceLabel("", "", labelText, labelText, "", "")
+        val dateTime = DateTimeFormatter.ofPattern("MMM d, yyyy (h:mm a)").format(LocalDateTime.now())
+        val label = AttendanceLabel(dateTime, attendanceList.size.toString(), attendanceList)
         CoroutineScope(Dispatchers.IO).launch {
             bluetoothPrintService.printLabel(label)
         }

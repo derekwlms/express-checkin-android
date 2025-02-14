@@ -1,7 +1,6 @@
 package com.writestreams.checkin.service
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
@@ -10,7 +9,7 @@ import android.content.pm.PackageManager
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import com.writestreams.checkin.util.Label
+import com.writestreams.checkin.util.BaseLabel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.UUID
@@ -24,7 +23,7 @@ class BluetoothPrintService(private val context: Context) {
         private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     }
 
-    suspend fun printLabel(label: Label, deviceAddress: String = "66:32:F6:7A:4D:65") {
+    suspend fun printLabel(label: BaseLabel, deviceAddress: String = "66:32:F6:7A:4D:65") {
         // 66:32:F6:7A:4D:65 - new
         // 66:32:D7:D6:ED:10 - sgc
         withContext(Dispatchers.IO) {

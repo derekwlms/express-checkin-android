@@ -1,25 +1,22 @@
 package com.writestreams.checkin.util
 
-open class Label(
-    val time: String,
-    val number: String,
-    val name: String,
-    val phone: String,
-    val id: String,
-    val image: String
-) {
-    open fun asFPSLCommand(): String {
+
+abstract class BaseLabel {
+    abstract fun asFPSLCommand(): String
+}
+
+class Label(
+    private val title: String,
+    private val subtitle: String
+) : BaseLabel() {
+    override fun asFPSLCommand(): String {
         // TEXT X, Y, ”font”, rotation, x-multiplication, y-multiplication, “content”
         return """
             SIZE 59 mm,102 mm
             GAP 5mm,0
             CLS
-            TEXT 45,100,"1",90,2,2,"$number"
-            TEXT 45,800,"1",90,2,2,"$time"
-            TEXT 200,850,"1",90,2,2,"$image"
-            TEXT 200,630,"2",90,3,3,"$name"
-            TEXT 275,630,"1",90,2,2,"$phone"
-            TEXT 400,150,"2",90,2,2,"$id"
+            TEXT 200,800,"2",90,3,3,"$title"
+            TEXT 275,800,"1",90,2,2,"$subtitle"
             PRINT 1
             END
         """.trimIndent()
@@ -27,24 +24,26 @@ open class Label(
 }
 
 class ParentLabel(
-    time: String,
-    number: String,
-    name: String,
-    phone: String,
-    id: String,
-    image: String
-) : Label(time, number, name, phone, id, image) {
-
+    private val dateTime: String,
+    private val parentName1: String,
+    private val parentName2: String,
+    private val checkinCode: String,
+    private val childNames: List<String>
+) : BaseLabel() {
     override fun asFPSLCommand(): String {
+        val childTextLines = childNames.mapIndexed { index, childName ->
+            "TEXT ${50 + index * 50},300,\"1\",90,2,2,\"$childName\""
+        }.joinToString("\n")
         // TEXT X, Y, ”font”, rotation, x-multiplication, y-multiplication, “content”
         return """
             SIZE 59 mm,102 mm
             GAP 5mm,0
             CLS
-            TEXT 350,730,"1",90,2,2,"$time"
-            TEXT 50,730,"1",90,2,2,"$name"  // parent 1
-            TEXT 100,730,"1",90,2,2,"$phone" // parent 2
-            TEXT 200,730,"2",90,3,3,"$id"
+            TEXT 50,810,"1",90,2,2,"$parentName1"
+            TEXT 100,810,"1",90,2,2,"$parentName2"
+            TEXT 200,810,"2",90,3,3,"$checkinCode"
+            TEXT 350,810,"1",90,2,2,"$dateTime",
+            $childTextLines
             PRINT 1
             END
         """.trimIndent()
@@ -52,26 +51,25 @@ class ParentLabel(
 }
 
 class ChildLabel(
-    time: String,
-    number: String,
-    name: String,
-    phone: String,
-    id: String,
-    image: String
-) : Label(time, number, name, phone, id, image) {
-
+    private val dateTime: String,
+    private val sequenceNumber: String,
+    private val childName: String,
+    private val parentPhone: String,
+    private val checkinCode: String,
+    private val parentNames: String
+) : BaseLabel() {
     override fun asFPSLCommand(): String {
         // TEXT X, Y, ”font”, rotation, x-multiplication, y-multiplication, “content”
         return """
             SIZE 59 mm,102 mm
             GAP 5mm,0
             CLS
-            TEXT 45,100,"1",90,2,2,"$number"
-            TEXT 45,800,"1",90,2,2,"$time"
-            TEXT 200,800,"2",90,3,3,"$name"
-            TEXT 275,800,"1",90,2,2,"$phone"
-            TEXT 350,800,"1",90,2,2,"$image" // parent names
-            TEXT 400,150,"2",90,2,2,"$id"
+            TEXT 45,100,"1",90,2,2,"$sequenceNumber"
+            TEXT 45,800,"1",90,2,2,"$dateTime"
+            TEXT 200,800,"2",90,3,3,"$childName"
+            TEXT 275,800,"1",90,2,2,"$parentPhone"
+            TEXT 350,800,"1",90,2,2,"$parentNames"
+            TEXT 400,150,"2",90,2,2,"$checkinCode"
             PRINT 1
             END
         """.trimIndent()
@@ -79,25 +77,21 @@ class ChildLabel(
 }
 
 class AttendanceLabel(
-    time: String,
-    number: String,
-    name: String,
-    phone: String,
-    id: String,
-    image: String
-) : Label(time, number, name, phone, id, image) {
-
+    private val dateTime: String,
+    private val count: String,
+    private val attendees: List<String>
+) : BaseLabel() {
     override fun asFPSLCommand(): String {
+        val attendeeLines = attendees.mapIndexed { index, attendeeName ->
+            "TEXT 45,${170 + index * 50},\"1\",0,2,2,\"$attendeeName\""
+        }.joinToString("\n")
         return """
             SIZE 59 mm,102 mm
             GAP 5mm,0
             CLS
-            TEXT 45,100,"1",90,2,2,"$number"
-            TEXT 45,800,"1",90,2,2,"$time"
-            TEXT 200,850,"1",90,2,2,"$image"
-            TEXT 200,830,"2",90,3,3,"$name"
-            TEXT 275,830,"1",90,2,2,"$phone"
-            TEXT 400,150,"2",90,2,2,"$id"
+            TEXT 45,70,"1",0,2,2,"$dateTime"
+            TEXT 45,120,"1",0,2,2,"Count: $count"
+            $attendeeLines
             PRINT 1
             END
         """.trimIndent()
