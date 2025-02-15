@@ -1,6 +1,5 @@
 package com.writestreams.checkin.util
 
-
 abstract class BaseLabel {
     abstract fun asFPSLCommand(): String
 }
@@ -79,18 +78,27 @@ class ChildLabel(
 class AttendanceLabel(
     private val dateTime: String,
     private val count: String,
-    private val attendees: List<String>
+    private val attendees: List<String>,
+    private val isContinuation: Boolean = false
 ) : BaseLabel() {
     override fun asFPSLCommand(): String {
+        val startY = if (isContinuation) 70 else 170
         val attendeeLines = attendees.mapIndexed { index, attendeeName ->
-            "TEXT 45,${170 + index * 50},\"1\",0,2,2,\"$attendeeName\""
+            "TEXT 45,${startY + index * 40},\"1\",0,2,2,\"$attendeeName\""
         }.joinToString("\n")
+        var headerLines = ""
+        if (!isContinuation) {
+            headerLines = """
+                TEXT 45,40,"1",0,2,2,"SGC Children's Check-in"
+                TEXT 45,80,"1",0,2,2,"$dateTime"
+                TEXT 45,120,"1",0,2,2,"Count: $count"
+            """
+        }
         return """
             SIZE 59 mm,102 mm
             GAP 5mm,0
             CLS
-            TEXT 45,70,"1",0,2,2,"$dateTime"
-            TEXT 45,120,"1",0,2,2,"Count: $count"
+            $headerLines
             $attendeeLines
             PRINT 1
             END

@@ -16,9 +16,12 @@ class AttendanceService(private val context: Context) {
 
     fun printAttendanceList(attendanceList: List<String>) {
         val dateTime = DateTimeFormatter.ofPattern("MMM d, yyyy (h:mm a)").format(LocalDateTime.now())
-        val label = AttendanceLabel(dateTime, attendanceList.size.toString(), attendanceList)
+        val chunkedAttendanceList = attendanceList.chunked(16)
         CoroutineScope(Dispatchers.IO).launch {
-            bluetoothPrintService.printLabel(label)
+            chunkedAttendanceList.forEachIndexed { index, chunk ->
+                val label = AttendanceLabel(dateTime, chunk.size.toString(), chunk, isContinuation = index > 0)
+                bluetoothPrintService.printLabel(label)
+            }
         }
         Toast.makeText(context, "Printed the attendance list", Toast.LENGTH_SHORT).show()
     }

@@ -1,6 +1,7 @@
 package com.writestreams.checkin.ui.settings
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -76,22 +77,69 @@ class SettingsFragment : Fragment() {
 
         repository = Repository(requireContext())
 
+        val resetCheckinsButton: Button = view.findViewById(R.id.resetCheckinsButton)
+        resetCheckinsButton.setOnClickListener {
+            confirmThenResetCheckins()
+        }
         val getUpdatesButton: Button = view.findViewById(R.id.getUpdatesButton)
         getUpdatesButton.setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    repository.fetchAndCachePersons()
-                    val cachedPersons = repository.getCachedPersons()
-                    Toast.makeText(
-                        requireContext(),
-                        "Fetched ${cachedPersons.size} persons",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } catch (e: Exception) {
-                    Log.e("SettingsFragment", "Error fetching updates", e)
-                    Toast.makeText(requireContext(), "Error fetching updates", Toast.LENGTH_SHORT)
-                        .show()
-                }
+            confirmThenFetchPersons()
+        }
+    }
+
+    private fun confirmThenResetCheckins() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Confirm Reset")
+            .setMessage("Are you sure you want to reset all check-ins?")
+            .setPositiveButton("Yes") { dialog, which ->
+                resetCheckins()
+            }
+            .setNegativeButton("No", null)
+            .show()
+    }
+
+    private fun resetCheckins() {
+        lifecycleScope.launch {
+            try {
+                repository.resetAllCheckins()
+                Toast.makeText(
+                    requireContext(),
+                    "All check-ins have been reset",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } catch (e: Exception) {
+                Log.e("SettingsFragment", "Error resetting checkins", e)
+                Toast.makeText(requireContext(), "Error resetting checkins", Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+    }
+
+    private fun confirmThenFetchPersons() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Confirm Update")
+            .setMessage("Are you sure you want to update the local members database?")
+            .setPositiveButton("Yes") { dialog, which ->
+                fetchAndCachePersons()
+            }
+            .setNegativeButton("No", null)
+            .show()
+    }
+
+    private fun fetchAndCachePersons() {
+        lifecycleScope.launch {
+            try {
+                repository.fetchAndCachePersons()
+                val cachedPersons = repository.getCachedPersons()
+                Toast.makeText(
+                    requireContext(),
+                    "Fetched ${cachedPersons.size} persons",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } catch (e: Exception) {
+                Log.e("SettingsFragment", "Error fetching updates", e)
+                Toast.makeText(requireContext(), "Error fetching updates", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
     }

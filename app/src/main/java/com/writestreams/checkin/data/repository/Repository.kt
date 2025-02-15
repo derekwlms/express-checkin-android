@@ -74,6 +74,12 @@ class Repository(context: Context) {
         }
     }
 
+    suspend fun resetAllCheckins() {
+        return withContext(Dispatchers.IO) {
+            personDao.resetAllCheckins()
+        }
+    }
+
     suspend fun getCachedPersons(): List<Person> {
         return withContext(Dispatchers.IO) {
             personDao.getAllPersons()

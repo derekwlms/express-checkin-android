@@ -26,12 +26,22 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+<!--        <ImageView-->
+<!--            android:id="@+id/icon_launcher"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:src="@mipmap/ic_launcher"-->
+<!--            app:layout_constraintTop_toTopOf="parent"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            android:layout_marginTop="8dp"-->
+<!--            android:layout_marginEnd="8dp" />-->
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Enter a first or last name to search"
-            android:textSize="16sp"
-            android:paddingBottom="8dp"
+            android:textSize="20sp"
+            android:paddingBottom="12dp"
             android:gravity="center"/>
 
         <EditText

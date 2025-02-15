@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/navigation_checkin"
         android:name="com.writestreams.checkin.ui.checkin.CheckinFragment"
-        android:label="@string/title_checkin"
+        android:label="@string/title_checkin_header"
         tools:layout="@layout/fragment_checkin" />
 
     <fragment
