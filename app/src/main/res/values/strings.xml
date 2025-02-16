@@ -4,4 +4,8 @@
     <string name="title_attendance">Attendance</string>
     <string name="title_settings">Settings</string>
     <string name="title_checkin_header">SGC Woodstock - Check In</string>
+    <string-array name="device_addresses">
+        <item>66:32:F6:7A:4D:65</item>
+        <item>66:32:D7:D6:ED:10</item>
+    </string-array>
 </resources>

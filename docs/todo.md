@@ -1,12 +1,10 @@
 ## To do
 
-- Improve label printing - factor/cleanup, formatting, reference label
 - Checkin
-  - Top banner - Childrens Ministry, Date, Count
   - Add person - button, stub
   - Online checkin - checkin with Breeze
   - Add person dialog
   - Search - allow first and last name
+  - All children listed on parent label
 - Settings
-  - Printer selection
-  - Save selected device address, fix hardcoded deviceAddress
+  - Reference label (x, y coordinates)

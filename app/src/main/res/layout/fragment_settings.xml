@@ -26,14 +26,16 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <EditText
-            android:id="@+id/deviceAddressEditText"
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Bluetooth Device Address"
-            android:inputType="text"
-            android:text="66:32:F6:7A:4D:65"/>
-        <!--android:text="66:32:D7:D6:ED:10"/>-->
+            android:text="Bluetooth Printer Address"
+            android:layout_marginBottom="8dp"/>
+        <Spinner
+            android:id="@+id/deviceAddressSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/device_addresses"/>
 
         <EditText
             android:id="@+id/labelTextEditText"
@@ -46,7 +48,7 @@
 
         <Button
             android:id="@+id/printButton"
-            android:layout_width="wrap_content"
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:text="Test Print"/>
 
@@ -59,13 +61,13 @@
 
         <Button
             android:id="@+id/resetCheckinsButton"
-            android:layout_width="wrap_content"
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:text="Reset Checkins" />
 
         <Button
             android:id="@+id/getUpdatesButton"
-            android:layout_width="wrap_content"
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:text="Get Updates"/>
 

@@ -2,6 +2,7 @@ package com.writestreams.checkin.ui.settings
 
 import android.Manifest
 import android.app.AlertDialog
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -11,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
@@ -26,7 +28,7 @@ import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
-    private lateinit var deviceAddressEditText: EditText
+    private lateinit var deviceAddressSpinner: Spinner
     private lateinit var labelTextEditText: EditText
     private lateinit var printButton: Button
 
@@ -66,7 +68,7 @@ class SettingsFragment : Fragment() {
 
         bluetoothPrintService = BluetoothPrintService(requireContext())
 
-        deviceAddressEditText = view.findViewById(R.id.deviceAddressEditText)
+        deviceAddressSpinner = view.findViewById(R.id.deviceAddressSpinner)
         labelTextEditText = view.findViewById(R.id.labelTextEditText)
         printButton = view.findViewById(R.id.printButton)
 
@@ -174,7 +176,7 @@ class SettingsFragment : Fragment() {
     // If so, see onRequestPermissionsResult in the 2/8/25 ~ 8:50 pm commit
 
     private fun connectAndPrint() {
-        val deviceAddress = deviceAddressEditText.text.toString()
+        val deviceAddress = deviceAddressSpinner.selectedItem.toString()
         val labelText = labelTextEditText.text.toString()
 
         if (deviceAddress.isEmpty() || labelText.isEmpty()) {
@@ -182,12 +184,18 @@ class SettingsFragment : Fragment() {
             return
         }
 
+        val sharedPreferences = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        with(sharedPreferences.edit()) {
+            putString("printer_device_address", deviceAddress)
+            apply()
+        }
+
         lifecycleScope.launch {
             val label = Label(labelText, deviceAddress)
             // bluetoothPrintService.logPairedDevices()  // determine deviceAddress (MAC address)
             // Paired device: BlueTooth Printer - 66:32:F6:7A:4D:65
             // Paired device: BlueTooth Printer - 66:32:D7:D6:ED:10
-            bluetoothPrintService.printLabel(label, deviceAddress)
+            bluetoothPrintService.printLabel(label)
         }
     }
 
