@@ -1,0 +1,289 @@
+{
+	"info": {
+		"_postman_id": "27ceb960-7685-4c13-9eba-8e6220193080",
+		"name": "Breeze CHMS - SGC",
+		"description": "Used by SGC Woodstock\n\n[https://app.breezechms.com/api](https://app.breezechms.com/api)\n\n[https://app.swaggerhub.com/apis/Tithe.ly/Breeze/2023-06-09](https://app.swaggerhub.com/apis/Tithe.ly/Breeze/2023-06-09)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "960321"
+	},
+	"item": [
+		{
+			"name": "events",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/events?start=2025-02-01&end=2025-02-05",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"events"
+					],
+					"query": [
+						{
+							"key": "start",
+							"value": "2025-02-01"
+						},
+						{
+							"key": "end",
+							"value": "2025-02-05"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "checkin - eligible people",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/events/attendance/eligible?instance_id={{instanceId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"events",
+						"attendance",
+						"eligible"
+					],
+					"query": [
+						{
+							"key": "instance_id",
+							"value": "{{instanceId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "checkin - attendance",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/events/attendance/list?instance_id={{instanceId}}&details=true",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"events",
+						"attendance",
+						"list"
+					],
+					"query": [
+						{
+							"key": "instance_id",
+							"value": "{{instanceId}}"
+						},
+						{
+							"key": "details",
+							"value": "true"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "checkin - add person - in - checkin",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/events/attendance/add?person_id=12990277&instance_id={{instanceId}}&direction=out",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"events",
+						"attendance",
+						"add"
+					],
+					"query": [
+						{
+							"key": "person_id",
+							"value": "12990277"
+						},
+						{
+							"key": "instance_id",
+							"value": "{{instanceId}}"
+						},
+						{
+							"key": "direction",
+							"value": "out"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "people",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/people?details=1",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"people"
+					],
+					"query": [
+						{
+							"key": "details",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://api.breezechms.com/api/v2/event-instances?filter\\[start_datetime:gt:date\\]=2024-10-25&filter\\[start_datetime:lt:date\\]=2024-12-07&filter\\[category_id:contains:array\\]=18707,16521,17678",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "accept",
+						"value": "application/json, text/plain, */*"
+					},
+					{
+						"key": "accept-language",
+						"value": "en-US,en;q=0.9"
+					},
+					{
+						"key": "authorization",
+						"value": "Bearer eyJ0..."
+					},
+					{
+						"key": "origin",
+						"value": "https://sgcwoodstock.breezechms.com"
+					},
+					{
+						"key": "priority",
+						"value": "u=1, i"
+					},
+					{
+						"key": "referer",
+						"value": "https://sgcwoodstock.breezechms.com/"
+					},
+					{
+						"key": "sec-ch-ua",
+						"value": "\"Chromium\";v=\"130\", \"Google Chrome\";v=\"130\", \"Not?A_Brand\";v=\"99\""
+					},
+					{
+						"key": "sec-ch-ua-mobile",
+						"value": "?1"
+					},
+					{
+						"key": "sec-ch-ua-platform",
+						"value": "\"Android\""
+					},
+					{
+						"key": "sec-fetch-dest",
+						"value": "empty"
+					},
+					{
+						"key": "sec-fetch-mode",
+						"value": "cors"
+					},
+					{
+						"key": "sec-fetch-site",
+						"value": "same-site"
+					},
+					{
+						"key": "user-agent",
+						"value": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36"
+					}
+				],
+				"url": {
+					"raw": "https://api.breezechms.com/api/v2/event-instances?filter\\[start_datetime:gt:date\\]=2024-10-25&filter\\[start_datetime:lt:date\\]=2024-12-07&filter\\[category_id:contains:array\\]=18707,16521,17678",
+					"protocol": "https",
+					"host": [
+						"api",
+						"breezechms",
+						"com"
+					],
+					"path": [
+						"api",
+						"v2",
+						"event-instances"
+					],
+					"query": [
+						{
+							"key": "filter\\[start_datetime:gt:date\\]",
+							"value": "2024-10-25"
+						},
+						{
+							"key": "filter\\[start_datetime:lt:date\\]",
+							"value": "2024-12-07"
+						},
+						{
+							"key": "filter\\[category_id:contains:array\\]",
+							"value": "18707,16521,17678"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "key",
+				"value": "Api-Key",
+				"type": "string"
+			},
+			{
+				"key": "value",
+				"value": "dee58...",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "https://sgcwoodstock.breezechms.com",
+			"type": "string"
+		},
+		{
+			"key": "instanceId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
