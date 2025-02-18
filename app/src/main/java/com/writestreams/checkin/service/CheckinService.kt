@@ -4,25 +4,47 @@ import android.content.Context
 import android.util.Log
 import com.writestreams.checkin.data.local.FamilyMember
 import com.writestreams.checkin.data.local.Person
+import com.writestreams.checkin.data.network.BreezeChmsApiService
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.util.ChildLabel
 import com.writestreams.checkin.util.ParentLabel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 class CheckinService(private val context: Context) {
 
     private val repository = Repository(context)
+    private val apiService: BreezeChmsApiService
     private val bluetoothPrintService = BluetoothPrintService(context)
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy (h:mm a)")
 
     companion object {
         const val FAMILY_ROLE_CHILD = "2"
         var checkinCounter = 0
+    }
+
+    init {
+        val client = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+
+        val retrofit = Retrofit.Builder()
+            .client(client)
+            .baseUrl("https://sgcwoodstock.breezechms.com/api/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        apiService = retrofit.create(BreezeChmsApiService::class.java)
     }
 
     fun checkinFamily(allFamilyMembers: List<FamilyMember>, checkedFamilyMembers: Set<FamilyMember>) {
@@ -66,6 +88,6 @@ class CheckinService(private val context: Context) {
 
     private suspend fun checkInWithBreeze(child: Person, parentPersons: List<Person?>, currentDateTime: LocalDateTime) {
         Log.d("checkinFamily", "Checked in child: ${child.first_name} ${child.last_name} at $currentDateTime")
-        // TODO Finish this once we find an API that works
+        apiService.checkIn(child.id, "210398278")
     }
 }
