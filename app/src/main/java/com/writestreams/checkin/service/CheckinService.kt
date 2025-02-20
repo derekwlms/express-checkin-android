@@ -68,6 +68,16 @@ class CheckinService(private val context: Context) {
         }
     }
 
+    fun checkOutPerson(person: Person) {
+        CoroutineScope(Dispatchers.IO).launch {
+            person.checkinDateTime = null
+            person.checkinCode = null
+            person.checkinCounter = null
+            repository.updatePerson(person)
+            checkOutWithBreeze(person)
+        }
+    }
+
     private suspend fun printLabels(child: Person, parentPersons: List<Person?>, formattedDateTime: String, printParent: Boolean) {
         val parentName = "${parentPersons[0]?.first_name} ${parentPersons[0]?.last_name}"
         val parent2Name = "${parentPersons[1]?.first_name} ${parentPersons[1]?.last_name}"
@@ -89,5 +99,10 @@ class CheckinService(private val context: Context) {
     private suspend fun checkInWithBreeze(child: Person, parentPersons: List<Person?>, currentDateTime: LocalDateTime) {
         Log.d("checkinFamily", "Checked in child: ${child.first_name} ${child.last_name} at $currentDateTime")
         apiService.checkIn(child.id, "210398278")
+    }
+
+    private suspend fun checkOutWithBreeze(person: Person) {
+        Log.d("checkOutWithBreeze", "Checked out ${person.first_name} ${person.last_name}")
+        apiService.checkIn(person.id, "210398278", "out")
     }
 }
