@@ -38,9 +38,13 @@ class SettingsFragment : Fragment() {
 
     companion object {
         private lateinit var bluetoothPrintService: BluetoothPrintService
+        private val deviceAddresses = mapOf(
+            "Printer A" to "66:32:F6:7A:4D:65",   // 117
+            "Printer B" to "66:32:D7:D6:ED:10",
+            "Printer C" to "66:32:27:5A:91:A4"    // 514
+        )
     }
 
-    // Permission request launcher
     private val multiplePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -176,11 +180,12 @@ class SettingsFragment : Fragment() {
     // If so, see onRequestPermissionsResult in the 2/8/25 ~ 8:50 pm commit
 
     private fun connectAndPrint() {
-        val deviceAddress = deviceAddressSpinner.selectedItem.toString()
+        val deviceId = deviceAddressSpinner.selectedItem.toString()
+        val deviceAddress = deviceAddresses[deviceId] ?: "66:32:F6:7A:4D:65"
         val labelText = labelTextEditText.text.toString()
 
         if (deviceAddress.isEmpty() || labelText.isEmpty()) {
-            Toast.makeText(requireContext(), "Please enter device address and label text", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Please select a printer and enter label text", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -190,11 +195,13 @@ class SettingsFragment : Fragment() {
             apply()
         }
 
+        val labelStrings = ("$labelText,,").split(',')
         lifecycleScope.launch {
-            val label = Label(labelText, deviceAddress)
+            val label = Label(labelStrings[0] ?: "", labelStrings[1] ?: "")
             // bluetoothPrintService.logPairedDevices()  // determine deviceAddress (MAC address)
-            // Paired device: BlueTooth Printer - 66:32:F6:7A:4D:65
-            // Paired device: BlueTooth Printer - 66:32:D7:D6:ED:10
+            // Paired device: BlueTooth Printer - 66:32:F6:7A:4D:65 - new - A
+            // Paired device: BlueTooth Printer - 66:32:D7:D6:ED:10 - sgc - B
+            // Paired device: BlueTooth Printer - 66:32:27:5A:91:A4 - newest - C
             bluetoothPrintService.printLabel(label)
         }
     }
