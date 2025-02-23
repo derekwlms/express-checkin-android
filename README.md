@@ -1,5 +1,7 @@
 # Express Check-in
 
+![SGC Logo](assets/sgc-logo-white.svg)
+
 Event check-in for use with Breeze CHMS.
 
 Used at [Sovereign Grace Church - Woodstock](https://sgcatlanta.org/) as a fallback for times when Breeze CHMS is unavailable or is degraded.

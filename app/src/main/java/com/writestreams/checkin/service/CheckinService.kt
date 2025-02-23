@@ -19,6 +19,8 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
+private const val INSTANCE_ID_ZZZ = "210398282" // TODO ZZZZ Add date/instance selection to Settings
+
 class CheckinService(private val context: Context) {
 
     private val repository = Repository(context)
@@ -54,17 +56,20 @@ class CheckinService(private val context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             val parentFamilyMembers = allFamilyMembers.filter { it.family_role_id != FAMILY_ROLE_CHILD }
             val parentPersons = parentFamilyMembers.map { repository.getPersonById(it.person_id) }
-            for ((index, member) in checkedFamilyMembers.withIndex()) {
-                val familyMemberPerson = repository.getPersonById(member.person_id)
-                familyMemberPerson?.let {
+            val childPersons = mutableListOf<Person>()
+            for (member in checkedFamilyMembers) {
+                val childPerson = repository.getPersonById(member.person_id)
+                childPerson?.let {
                     it.checkinDateTime = currentDateTime
                     it.checkinCode = checkinCode
                     it.checkinCounter = (++checkinCounter).toString()
                     repository.updatePerson(it)
-                    printLabels(it, parentPersons, formattedDateTime, index == 0)
-                    checkInWithBreeze(it, parentPersons, currentDateTime)
+                    printChildLabel(it, parentPersons, formattedDateTime)
+                    checkInWithBreeze(it, currentDateTime)
+                    childPersons.add(childPerson)
                 }
             }
+            printParentLabel(parentPersons, childPersons, formattedDateTime)
         }
     }
 
@@ -78,31 +83,35 @@ class CheckinService(private val context: Context) {
         }
     }
 
-    private suspend fun printLabels(child: Person, parentPersons: List<Person?>, formattedDateTime: String, printParent: Boolean) {
+    private suspend fun printChildLabel(child: Person, parentPersons: List<Person?>, formattedDateTime: String) {
         val parentName = "${parentPersons[0]?.first_name} ${parentPersons[0]?.last_name}"
         val parent2Name = "${parentPersons[1]?.first_name} ${parentPersons[1]?.last_name}"
         val phoneNumber = parentPersons[0]?.details?.phoneDetails?.firstOrNull {
-            !it.phone_number.isNullOrEmpty()
+            it.phone_number.isNotEmpty()
         }?.phone_number ?: ""
-        val parentLabel = ParentLabel(formattedDateTime,
-            parentName, parent2Name, child.checkinCode!!,
-            listOf("${child.first_name} ${child.last_name}"))
-        if (printParent)
-            bluetoothPrintService.printLabel(parentLabel)
-
         val childName = "${child.first_name} ${child.last_name}"
         val childLabel = ChildLabel(formattedDateTime, child.checkinCounter!!,
             childName, phoneNumber, child.checkinCode!!, "$parentName - $parent2Name")
         bluetoothPrintService.printLabel(childLabel)
     }
 
-    private suspend fun checkInWithBreeze(child: Person, parentPersons: List<Person?>, currentDateTime: LocalDateTime) {
+    private suspend fun printParentLabel(parentPersons: List<Person?>, childPersons: List<Person?>, formattedDateTime: String) {
+        val parentName = "${parentPersons[0]?.first_name} ${parentPersons[0]?.last_name}"
+        val parent2Name = "${parentPersons[1]?.first_name} ${parentPersons[1]?.last_name}"
+        val childNames = childPersons.map { "${it?.first_name} ${it?.last_name}" }
+        val checkinCode = childPersons.firstOrNull()?.checkinCode ?: "-"
+        val parentLabel = ParentLabel(formattedDateTime,
+            parentName, parent2Name, checkinCode, childNames)
+        bluetoothPrintService.printLabel(parentLabel)
+    }
+
+    private suspend fun checkInWithBreeze(child: Person, currentDateTime: LocalDateTime) {
         Log.d("checkinFamily", "Checked in child: ${child.first_name} ${child.last_name} at $currentDateTime")
-        apiService.checkIn(child.id, "210398278")
+        apiService.checkIn(child.id, INSTANCE_ID_ZZZ)
     }
 
     private suspend fun checkOutWithBreeze(person: Person) {
         Log.d("checkOutWithBreeze", "Checked out ${person.first_name} ${person.last_name}")
-        apiService.checkIn(person.id, "210398278", "out")
+        apiService.checkIn(person.id, INSTANCE_ID_ZZZ, "out")
     }
 }
