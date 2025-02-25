@@ -102,7 +102,12 @@ class CheckinService(private val context: Context) {
 
     private suspend fun checkInWithBreeze(child: Person, currentDateTime: LocalDateTime) {
         Log.d("checkinFamily", "Checked in child: ${child.first_name} ${child.last_name} at $currentDateTime")
-        apiService.checkIn(child.id, INSTANCE_ID_ZZZ)
+        try {
+            apiService.checkIn(child.id, INSTANCE_ID_ZZZ)
+        } catch (e: Exception) {
+            Log.e("checkInWithBreeze",
+                "Exception calling checkIn API for ${child.first_name} ${child.last_name}", e)
+        }
     }
 
     private suspend fun checkOutWithBreeze(person: Person) {

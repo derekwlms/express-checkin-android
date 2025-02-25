@@ -170,7 +170,7 @@
 					},
 					{
 						"key": "authorization",
-						"value": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS5icmVlemVjaG1zLmNvbS9hcGkvdjIvYXV0aC9sb2dpbiIsImlhdCI6MTczMTgxNTUwMywiZXhwIjoxNzMxODE5MTAzLCJuYmYiOjE3MzE4MTU1MDMsImp0aSI6ImJvaVBPQ1cxOE44UG1HUFEiLCJzdWIiOiIzMjE3MjAiLCJwcnYiOiI0YWMwNWMwZjhhYzA4ZjM2NGNiNGQwM2ZiOGUxZjYzMWZlYzMyMmU4In0.gyZtNMzkq4VYUvtCZ6Phl94_N0_r2iSdXnJ4ay8bf84"
+						"value": "Bearer eyJ0..."
 					},
 					{
 						"key": "origin",
