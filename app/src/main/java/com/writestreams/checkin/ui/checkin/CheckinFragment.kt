@@ -97,6 +97,7 @@ class CheckinFragment : Fragment() {
     private fun showFamilyCheckinDialog(person: Person) {
         val dialogFragment = FamilyCheckinDialogFragment(person)
         dialogFragment.show(parentFragmentManager, "FamilyCheckinDialogFragment")
+        searchTextEditText.text.clear()
     }
 
     override fun onDestroyView() {

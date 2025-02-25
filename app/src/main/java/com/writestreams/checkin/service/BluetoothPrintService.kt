@@ -48,7 +48,7 @@ class BluetoothPrintService(private val context: Context) {
                 bluetoothSocket?.outputStream?.write(label.asFPSLCommand().toByteArray())
 
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Label Printed Successfully!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Label Printed", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 val errorMessage = "Printing Error: ${e.localizedMessage}"

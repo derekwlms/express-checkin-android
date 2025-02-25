@@ -84,11 +84,7 @@ class CheckinService(private val context: Context) {
     }
 
     private suspend fun printChildLabel(child: Person, parentPersons: List<Person?>, formattedDateTime: String) {
-        val parentName = "${parentPersons[0]?.first_name} ${parentPersons[0]?.last_name}"
-        val parent2Name = "${parentPersons[1]?.first_name} ${parentPersons[1]?.last_name}"
-        val phoneNumber = parentPersons[0]?.details?.phoneDetails?.firstOrNull {
-            it.phone_number.isNotEmpty()
-        }?.phone_number ?: ""
+        val (parentName, parent2Name, phoneNumber) = getParentInfo(parentPersons)
         val childName = "${child.first_name} ${child.last_name}"
         val childLabel = ChildLabel(formattedDateTime, child.checkinCounter!!,
             childName, phoneNumber, child.checkinCode!!, "$parentName - $parent2Name")
@@ -96,8 +92,7 @@ class CheckinService(private val context: Context) {
     }
 
     private suspend fun printParentLabel(parentPersons: List<Person?>, childPersons: List<Person?>, formattedDateTime: String) {
-        val parentName = "${parentPersons[0]?.first_name} ${parentPersons[0]?.last_name}"
-        val parent2Name = "${parentPersons[1]?.first_name} ${parentPersons[1]?.last_name}"
+        val (parentName, parent2Name, _) = getParentInfo(parentPersons)
         val childNames = childPersons.map { "${it?.first_name} ${it?.last_name}" }
         val checkinCode = childPersons.firstOrNull()?.checkinCode ?: "-"
         val parentLabel = ParentLabel(formattedDateTime,
@@ -113,5 +108,15 @@ class CheckinService(private val context: Context) {
     private suspend fun checkOutWithBreeze(person: Person) {
         Log.d("checkOutWithBreeze", "Checked out ${person.first_name} ${person.last_name}")
         apiService.checkIn(person.id, INSTANCE_ID_ZZZ, "out")
+    }
+    
+    private fun getParentInfo(parentPersons: List<Person?>): Triple<String, String, String> {
+        val parentInfo = Triple(
+            parentPersons.getOrNull(0)?.let { "${it.first_name} ${it.last_name}" } ?: "",
+            parentPersons.getOrNull(1)?.let { "${it.first_name} ${it.last_name}" } ?: "",
+            parentPersons.getOrNull(0)?.details?.phoneDetails?.firstOrNull
+                { it.phone_number.isNotEmpty() }?.phone_number ?: ""
+        )
+        return parentInfo
     }
 }

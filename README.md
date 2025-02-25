@@ -16,30 +16,14 @@ otherwise, it will use an offline directory and sync check-in data once Breeze i
 
 Express Check-in uses the following:
 
-- The Breeze CHMS APIs - See [Breeze CHMS APIs](#breeze-chms-apis) below
+- The Breeze CHMS API
+  - The [original Breeze REST APIs](https://app.breezechms.com/api).
+  - Other APIs ([Tithely](https://tithe.ly/api)) and subsequent [merged](https://app.swaggerhub.com/apis/Tithe.ly/Breeze/2023-06-09) [versions](/docs/breeze-apis/) do not include check-in.
+  - See the Postman collections under [docs/breeze-apis](/docs/breeze-apis/). 
+  - API keys are redacted in the exported Postman collections (replaced by `...`).
 - [TSPL (TSC Printer Language)](https://scancode.ru/upload/iblock/937/GP_1125T-Gprinter-Barcode-Printer-TSPL-Programming-Manual.pdf) [-](https://hackernoon.com/how-to-print-labels-with-tspl-and-javascript) See also [this](https://www.icintracom.biz/redazione/libretti/libretto7028-04-1.pdf) and the PDFs under [docs/printer-tspl](/docs/printer-tspl/)
 
 It requires:
 - One or more Android tablets. Android 8.0 and higher is required; Android 12 (API 31) is recommended.
 - One or more commodity Bluetooth thermal label printers. We are currently using the [Mvgges PL925U](https://www.amazon.com/gp/product/B0DBYW5C3L/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&th=1)
 - 2.25" x 4" (59mm x 102mm) labels, such as [these](https://www.amazon.com/gp/product/B0CGZWZLLP/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&th=1)
-
-## Breeze CHMS APIs
-
-The Breeze APIs seem to have gone through a few iterations since Breeze was acquired by Tithe.ly, including:
-- [v1 - Breeze](https://app.breezechms.com/api)
-  - The [original Breeze REST APIs](https://app.breezechms.com/api) - these are clean, well-documented, and still partially work
-- [v2 - Tithely](https://tithe.ly/api)
-  - These do not support Breeze events or check-in
-- [v2 - merge](https://app.swaggerhub.com/apis/Tithe.ly/Breeze/2023-06-09)
-  - An apparent incomplete attempt to merge the Breeze APIs into the Tithely set
-  - The [Swagger doc](https://app.swaggerhub.com/apis/Tithe.ly/Breeze/2023-06-09) has since been removed
-  - See [docs/breeze-apis](/docs/breeze-apis/) for a Postman export of this doc, from before its removal
-  - Note the description it contained:
-    - > This document is a WIP. It contains specifications for the Breeze REST API. Breeze is currently being updated to meet industry and Tithe.ly standards
-- v3 - current
-  - The `/v3` endpoints used by the current Breeze check-in web app
-  - These are undocumented and use non-REST protocols such as core ajax and websocket/pusher
-
-See the Postman collections under [docs/breeze-apis](/docs/breeze-apis/).
-API keys are redacted in the exported Postman collections (replaced by `...`).

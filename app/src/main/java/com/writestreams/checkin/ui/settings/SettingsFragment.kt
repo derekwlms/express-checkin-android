@@ -13,12 +13,14 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.writestreams.checkin.BuildConfig
 import com.writestreams.checkin.R
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.FragmentSettingsBinding
@@ -64,6 +66,10 @@ class SettingsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
+        val versionTextView: TextView = binding.root.findViewById(R.id.versionTextView)
+        val versionNumber = BuildConfig.VERSION_NAME
+        val buildDate = BuildConfig.BUILD_DATE
+        versionTextView.text = "Version $versionNumber\nBuild Date: $buildDate"
         return binding.root
     }
 
