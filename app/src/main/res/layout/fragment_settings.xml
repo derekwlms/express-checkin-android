@@ -26,16 +26,21 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Bluetooth Printer"
-            android:layout_marginBottom="8dp"/>
+<!--        <TextView-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Bluetooth Printer"-->
+<!--            android:layout_marginBottom="8dp"-->
+<!--            android:height="48dp"/>-->
+
         <Spinner
             android:id="@+id/deviceAddressSpinner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:entries="@array/device_addresses"/>
+            android:layout_marginBottom="24dp"
+            android:entries="@array/device_addresses"
+            android:textSize="24sp"
+            android:minHeight="48dp" />
 
         <EditText
             android:id="@+id/labelTextEditText"
@@ -44,13 +49,34 @@
             android:hint="Label Text"
             android:inputType="text"
             android:lines="3"
-            android:text="Test Label"/>
+            android:minHeight="48dp"
+            android:text="SGC Woodstock,Check-in" />
 
         <Button
             android:id="@+id/printButton"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:text="Test Print"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?android:attr/listDivider"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="32dp"/>
+
+        <DatePicker
+            android:id="@+id/checkinDatePicker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"/>
+
+        <TextView
+            android:id="@+id/breezeInstanceIdTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"/>
 
         <View
             android:layout_width="match_parent"
@@ -79,6 +105,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="64dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

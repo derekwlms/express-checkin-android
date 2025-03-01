@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.DatePicker
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
@@ -27,25 +28,33 @@ import com.writestreams.checkin.databinding.FragmentSettingsBinding
 import com.writestreams.checkin.service.BluetoothPrintService
 import com.writestreams.checkin.util.Label
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 class SettingsFragment : Fragment() {
-    private var _binding: FragmentSettingsBinding? = null
-    private lateinit var deviceAddressSpinner: Spinner
-    private lateinit var labelTextEditText: EditText
-    private lateinit var printButton: Button
-
-    private lateinit var repository: Repository
-
-    // TODO - Do we want to restore the ThermalPrinterListener here?
 
     companion object {
-        private lateinit var bluetoothPrintService: BluetoothPrintService
+        val BREEZE_INSTANCE_ID_START_DATE: LocalDate = LocalDate.of(2025, 2, 2)
+        const val BREEZE_INSTANCE_ID_START = 210398276   // Groundhog Day 2025
+
         private val deviceAddresses = mapOf(
             "Printer A" to "66:32:F6:7A:4D:65",   // 117
             "Printer B" to "66:32:D7:D6:ED:10",
             "Printer C" to "66:32:27:5A:91:A4"    // 514
         )
     }
+
+    private var _binding: FragmentSettingsBinding? = null
+    private lateinit var deviceAddressSpinner: Spinner
+    private lateinit var labelTextEditText: EditText
+    private lateinit var printButton: Button
+
+    private lateinit var bluetoothPrintService: BluetoothPrintService
+    private lateinit var repository: Repository
+
+    // TODO - Do we want to restore the ThermalPrinterListener here?
+
+
 
     private val multiplePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -70,6 +79,7 @@ class SettingsFragment : Fragment() {
         val versionNumber = BuildConfig.VERSION_NAME
         val buildDate = BuildConfig.BUILD_DATE
         versionTextView.text = "Version $versionNumber\nBuild Date: $buildDate"
+        updateBreezeInstanceId(LocalDate.now())
         return binding.root
     }
 
@@ -77,6 +87,7 @@ class SettingsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         bluetoothPrintService = BluetoothPrintService(requireContext())
+        repository = Repository(requireContext())
 
         deviceAddressSpinner = view.findViewById(R.id.deviceAddressSpinner)
         labelTextEditText = view.findViewById(R.id.labelTextEditText)
@@ -87,7 +98,12 @@ class SettingsFragment : Fragment() {
             requestPermissions()
         }
 
-        repository = Repository(requireContext())
+        val datePicker: DatePicker = view.findViewById(R.id.checkinDatePicker)
+        datePicker.init(
+            datePicker.year, datePicker.month, datePicker.dayOfMonth
+        ) { _, year, monthOfYear, dayOfMonth ->
+            updateBreezeInstanceId(LocalDate.of(year, monthOfYear + 1, dayOfMonth))
+        }
 
         val resetCheckinsButton: Button = view.findViewById(R.id.resetCheckinsButton)
         resetCheckinsButton.setOnClickListener {
@@ -103,7 +119,7 @@ class SettingsFragment : Fragment() {
         AlertDialog.Builder(requireContext())
             .setTitle("Confirm Reset")
             .setMessage("Are you sure you want to reset all check-ins?")
-            .setPositiveButton("Yes") { dialog, which ->
+            .setPositiveButton("Yes") { _, _ ->
                 resetCheckins()
             }
             .setNegativeButton("No", null)
@@ -131,7 +147,7 @@ class SettingsFragment : Fragment() {
         AlertDialog.Builder(requireContext())
             .setTitle("Confirm Update")
             .setMessage("Are you sure you want to update the local members database?")
-            .setPositiveButton("Yes") { dialog, which ->
+            .setPositiveButton("Yes") { _, _ ->
                 fetchAndCachePersons()
             }
             .setNegativeButton("No", null)
@@ -209,6 +225,19 @@ class SettingsFragment : Fragment() {
             // Paired device: BlueTooth Printer - 66:32:D7:D6:ED:10 - sgc - B
             // Paired device: BlueTooth Printer - 66:32:27:5A:91:A4 - newest - C
             bluetoothPrintService.printLabel(label)
+        }
+    }
+
+    private fun updateBreezeInstanceId(date: LocalDate) {
+        Log.d("SettingsFragment", "Checkin date: $date")
+        val sharedPreferences = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val weeksFromStartDate = ChronoUnit.WEEKS.between(BREEZE_INSTANCE_ID_START_DATE, date).toInt()
+        val breezeInstanceId = (BREEZE_INSTANCE_ID_START + (2 * weeksFromStartDate)).toString()
+        val breezeInstanceIdTextView: TextView = binding.root.findViewById(R.id.breezeInstanceIdTextView)
+        breezeInstanceIdTextView.text = breezeInstanceId
+        with(sharedPreferences.edit()) {
+            putString("breeze_instance_id", breezeInstanceId)
+            apply()
         }
     }
 

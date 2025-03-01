@@ -20,8 +20,6 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
-private const val INSTANCE_ID_ZZZ = "210398282" // TODO ZZZZ Add date/instance selection to Settings
-
 class CheckinService(private val context: Context) {
 
     private val repository = Repository(context)
@@ -54,6 +52,7 @@ class CheckinService(private val context: Context) {
         val currentDateTime = LocalDateTime.now()
         val formattedDateTime = dateTimeFormatter.format(currentDateTime)
         val checkinCode = Random.nextInt(1000, 9999).toString()
+        val breezeInstanceId = getBreezeInstanceId()
         CoroutineScope(Dispatchers.IO).launch {
             val parentFamilyMembers = allFamilyMembers.filter { it.family_role_id != FAMILY_ROLE_CHILD }
             val parentPersons = parentFamilyMembers.map { repository.getPersonById(it.person_id) }
@@ -66,7 +65,7 @@ class CheckinService(private val context: Context) {
                     it.checkinCounter = (++checkinCounter).toString()
                     repository.updatePerson(it)
                     printChildLabel(it, parentPersons, formattedDateTime)
-                    checkInWithBreeze(it, currentDateTime)
+                    checkInWithBreeze(it, currentDateTime, breezeInstanceId)
                     childPersons.add(childPerson)
                 }
             }
@@ -80,7 +79,7 @@ class CheckinService(private val context: Context) {
             person.checkinCode = null
             person.checkinCounter = null
             repository.updatePerson(person)
-            checkOutWithBreeze(person)
+            checkOutWithBreeze(person, getBreezeInstanceId())
         }
     }
 
@@ -123,19 +122,19 @@ class CheckinService(private val context: Context) {
         bluetoothPrintService.printLabel(parentLabel)   // One to share
     }
 
-    private suspend fun checkInWithBreeze(child: Person, currentDateTime: LocalDateTime) {
+    private suspend fun checkInWithBreeze(child: Person, currentDateTime: LocalDateTime, breezeInstanceId: String) {
         Log.d("checkinFamily", "Checked in child: ${child.first_name} ${child.last_name} at $currentDateTime")
         try {
-            apiService.checkIn(child.id, INSTANCE_ID_ZZZ)
+            apiService.checkIn(child.id, breezeInstanceId)
         } catch (e: Exception) {
             Log.e("checkInWithBreeze",
                 "Exception calling checkIn API for ${child.first_name} ${child.last_name}", e)
         }
     }
 
-    private suspend fun checkOutWithBreeze(person: Person) {
+    private suspend fun checkOutWithBreeze(person: Person, breezeInstanceId: String) {
         Log.d("checkOutWithBreeze", "Checked out ${person.first_name} ${person.last_name}")
-        apiService.checkIn(person.id, INSTANCE_ID_ZZZ, "out")
+        apiService.checkIn(person.id, breezeInstanceId, "out")
     }
     
     private fun getParentInfo(parentPersons: List<Person?>): Triple<String, String, String> {
@@ -146,5 +145,10 @@ class CheckinService(private val context: Context) {
                 { it.phone_number.isNotEmpty() }?.phone_number ?: ""
         )
         return parentInfo
+    }
+
+    private fun getBreezeInstanceId(): String {
+        val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        return sharedPreferences.getString("breeze_instance_id", "210398284") ?: "210398284"
     }
 }
