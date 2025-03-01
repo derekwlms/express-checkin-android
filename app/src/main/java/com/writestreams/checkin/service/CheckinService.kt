@@ -3,6 +3,7 @@ package com.writestreams.checkin.service
 import android.content.Context
 import android.util.Log
 import com.writestreams.checkin.data.local.FamilyMember
+import com.writestreams.checkin.data.local.Guest
 import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.data.network.BreezeChmsApiService
 import com.writestreams.checkin.data.repository.Repository
@@ -83,6 +84,16 @@ class CheckinService(private val context: Context) {
         }
     }
 
+    fun checkInGuest(guest: Guest) {
+        Log.d("checkinGuest:", guest.toString())
+        CoroutineScope(Dispatchers.IO).launch {
+            guest.checkinDateTime = dateTimeFormatter.format(LocalDateTime.now())
+            guest.checkinCode = Random.nextInt(1000, 9999).toString()
+            guest.checkinCounter = (++checkinCounter).toString()
+            printGuestLabels(guest)
+        }
+    }
+
     private suspend fun printChildLabel(child: Person, parentPersons: List<Person?>, formattedDateTime: String) {
         val (parentName, parent2Name, phoneNumber) = getParentInfo(parentPersons)
         val childName = "${child.first_name} ${child.last_name}"
@@ -98,6 +109,18 @@ class CheckinService(private val context: Context) {
         val parentLabel = ParentLabel(formattedDateTime,
             parentName, parent2Name, checkinCode, childNames)
         bluetoothPrintService.printLabel(parentLabel)
+    }
+    private suspend fun printGuestLabels(guest: Guest) {
+        val parentName = "${guest.firstName} ${guest.lastName}"
+        val parentLabel = ParentLabel(guest.checkinDateTime,
+            parentName, "", guest.checkinCode, guest.childNames)
+        bluetoothPrintService.printLabel(parentLabel)   // One to keep
+        guest.childNames.forEach {
+            val childLabel = ChildLabel(guest.checkinDateTime, (checkinCounter++).toString(),
+                it, guest.phoneNumber, guest.checkinCode, parentName)
+            bluetoothPrintService.printLabel(childLabel)
+        }
+        bluetoothPrintService.printLabel(parentLabel)   // One to share
     }
 
     private suspend fun checkInWithBreeze(child: Person, currentDateTime: LocalDateTime) {

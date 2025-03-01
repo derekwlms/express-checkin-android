@@ -1,19 +1,22 @@
 ## To do
 
-- Checkin 
-  - Finish guest checkin - print labels, email
-  - Search - first and last name
+- Today:
+  - Select date / event Id (dropdown)
+  - 2-up parent label
   - Search - phone number
+  - Move label number
+  - Attendance - Email using mailgun 
+  - Guest check-in - email
+- Checkin
+  - Search - first and last name
   - Delete check-in (not just check out)
 - Settings
-  - Select date / event Id (dropdown)
   - Reference label (x, y coordinates)
-- Attendance
-  - Email using mailgun
 - Misc
-  - Move label number
   - White background squircle of logo image (python)
-  - OTA install
+  - Remote logs/monitoring. Crashlytics?
+  - OTA install?
   - GHA build?
+  - Switch to Material for views, validation, etc?
 - Fixes
-  - Attendance not printing until changing printers
+  - Attendance not printing until changing printers?
