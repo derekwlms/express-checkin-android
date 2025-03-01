@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.writestreams.checkin.R
 import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.data.repository.Repository
@@ -25,6 +26,7 @@ class CheckinFragment : Fragment() {
     private var _binding: FragmentCheckinBinding? = null
     private lateinit var searchTextEditText: EditText
     private lateinit var searchButton: Button
+    private lateinit var addGuestCheckinButton: FloatingActionButton
     private lateinit var resultsRecyclerView: RecyclerView
     private lateinit var repository: Repository
     private lateinit var adapter: PersonAdapter
@@ -45,6 +47,7 @@ class CheckinFragment : Fragment() {
         repository = Repository(requireContext())
         searchTextEditText = view.findViewById(R.id.searchTextEditText)
         searchButton = view.findViewById(R.id.searchButton)
+        addGuestCheckinButton = view.findViewById(R.id.addGuestCheckinButton)
         resultsRecyclerView = view.findViewById(R.id.resultsRecyclerView)
         resultsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = PersonAdapter { person -> showFamilyCheckinDialog(person) }
@@ -57,6 +60,10 @@ class CheckinFragment : Fragment() {
             } else {
                 Toast.makeText(requireContext(), "Please enter a name to search", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        addGuestCheckinButton.setOnClickListener {
+            showGuestCheckinDialog()
         }
 
         searchTextEditText.setOnEditorActionListener { _, actionId, event ->
@@ -98,6 +105,10 @@ class CheckinFragment : Fragment() {
         val dialogFragment = FamilyCheckinDialogFragment(person)
         dialogFragment.show(parentFragmentManager, "FamilyCheckinDialogFragment")
         searchTextEditText.text.clear()
+    }
+
+    private fun showGuestCheckinDialog() {
+        GuestCheckinDialogFragment().show(parentFragmentManager, "GuestCheckinDialogFragment")
     }
 
     override fun onDestroyView() {
