@@ -21,7 +21,7 @@ Express Check-in uses the following:
   - Other APIs ([Tithely](https://tithe.ly/api)) and subsequent [merged](https://app.swaggerhub.com/apis/Tithe.ly/Breeze/2023-06-09) [versions](/docs/breeze-apis/) do not include check-in.
   - See the Postman collections under [docs/breeze-apis](/docs/breeze-apis/). 
   - API keys are redacted in the exported Postman collections (replaced by `...`).
-- [TSPL (TSC Printer Language)](https://scancode.ru/upload/iblock/937/GP_1125T-Gprinter-Barcode-Printer-TSPL-Programming-Manual.pdf) [-](https://hackernoon.com/how-to-print-labels-with-tspl-and-javascript) See also [this](https://www.icintracom.biz/redazione/libretti/libretto7028-04-1.pdf) and the PDFs under [docs/printer-tspl](/docs/printer-tspl/)
+- [TSPL (Taiwan Semiconductor Printer Language)](https://scancode.ru/upload/iblock/937/GP_1125T-Gprinter-Barcode-Printer-TSPL-Programming-Manual.pdf) [-](https://hackernoon.com/how-to-print-labels-with-tspl-and-javascript) See also [this](https://www.icintracom.biz/redazione/libretti/libretto7028-04-1.pdf) and the PDFs under [docs/printer-tspl](/docs/printer-tspl/)
 
 It requires:
 - One or more Android tablets. Android 8.0 and higher is required; Android 12 (API 31) is recommended.

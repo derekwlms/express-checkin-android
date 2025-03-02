@@ -1,18 +1,14 @@
 ## To do
 
-- Today:
-  - Select date / event Id (dropdown)
-  - 2-up parent label
-  - Search - phone number
-  - Move label number
-  - Attendance - Email using mailgun 
-  - Guest check-in - email
 - Checkin
+  - Search - phone number
   - Search - first and last name
   - Delete check-in (not just check out)
-- Settings
-  - Reference label (x, y coordinates)
+  - Guest check-in - email 
+- Attendance -
+  - Email using mailgun
 - Misc
+  - Move label number
   - White background squircle of logo image (python)
   - Remote logs/monitoring. Crashlytics?
   - OTA install?

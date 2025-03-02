@@ -27,6 +27,7 @@ import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.FragmentSettingsBinding
 import com.writestreams.checkin.service.BluetoothPrintService
 import com.writestreams.checkin.util.Label
+import com.writestreams.checkin.util.ReferenceLabel
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -51,10 +52,6 @@ class SettingsFragment : Fragment() {
 
     private lateinit var bluetoothPrintService: BluetoothPrintService
     private lateinit var repository: Repository
-
-    // TODO - Do we want to restore the ThermalPrinterListener here?
-
-
 
     private val multiplePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -94,7 +91,7 @@ class SettingsFragment : Fragment() {
         printButton = view.findViewById(R.id.printButton)
 
         printButton.setOnClickListener {
-            // TODO - Do we want checkBluetoothPermissions() here? - see 2/8/25 ~ 8:50 pm commit
+            // Do we want checkBluetoothPermissions() here? - see 2/8/25 ~ 8:50 pm commit
             requestPermissions()
         }
 
@@ -198,7 +195,7 @@ class SettingsFragment : Fragment() {
         }
     }
 
-    // TODO - Do we want to support older Android versions?
+    // Do we want to support older Android versions?
     // If so, see onRequestPermissionsResult in the 2/8/25 ~ 8:50 pm commit
 
     private fun connectAndPrint() {
@@ -219,12 +216,17 @@ class SettingsFragment : Fragment() {
 
         val labelStrings = ("$labelText,,").split(',')
         lifecycleScope.launch {
-            val label = Label(labelStrings[0] ?: "", labelStrings[1] ?: "")
+            val label = if (labelText.startsWith("@")) {
+                ReferenceLabel()
+            } else {
+                Label(labelStrings[0] ?: "", labelStrings[1] ?: "")
+            }
+            bluetoothPrintService.printLabel(label)
             // bluetoothPrintService.logPairedDevices()  // determine deviceAddress (MAC address)
             // Paired device: BlueTooth Printer - 66:32:F6:7A:4D:65 - new - A
             // Paired device: BlueTooth Printer - 66:32:D7:D6:ED:10 - sgc - B
             // Paired device: BlueTooth Printer - 66:32:27:5A:91:A4 - newest - C
-            bluetoothPrintService.printLabel(label)
+
         }
     }
 

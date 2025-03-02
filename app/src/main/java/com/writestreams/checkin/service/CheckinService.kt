@@ -8,6 +8,7 @@ import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.data.network.BreezeChmsApiService
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.util.ChildLabel
+import com.writestreams.checkin.util.GuestLabel
 import com.writestreams.checkin.util.ParentLabel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -113,13 +114,15 @@ class CheckinService(private val context: Context) {
         val parentName = "${guest.firstName} ${guest.lastName}"
         val parentLabel = ParentLabel(guest.checkinDateTime,
             parentName, "", guest.checkinCode, guest.childNames)
-        bluetoothPrintService.printLabel(parentLabel)   // One to keep
+        val guestLabel = GuestLabel(guest.checkinDateTime,
+            parentName, guest.checkinCode, guest.childNames)
+        bluetoothPrintService.printLabel(guestLabel)    // For greeter to keep
         guest.childNames.forEach {
             val childLabel = ChildLabel(guest.checkinDateTime, (checkinCounter++).toString(),
                 it, guest.phoneNumber, guest.checkinCode, parentName)
             bluetoothPrintService.printLabel(childLabel)
         }
-        bluetoothPrintService.printLabel(parentLabel)   // One to share
+        bluetoothPrintService.printLabel(parentLabel)
     }
 
     private suspend fun checkInWithBreeze(child: Person, currentDateTime: LocalDateTime, breezeInstanceId: String) {

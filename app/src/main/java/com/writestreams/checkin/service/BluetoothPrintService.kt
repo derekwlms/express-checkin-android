@@ -35,17 +35,15 @@ class BluetoothPrintService(private val context: Context) {
                         Manifest.permission.BLUETOOTH_CONNECT
                     ) != PackageManager.PERMISSION_GRANTED
                 ) {
-                    // TODO: Consider calling ActivityCompat#requestPermissions
+                    // Consider calling ActivityCompat#requestPermissions
                     // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the user granting permission.
+                    // onRequestPermissionsResult to handle the user granting permission.
                     // See the ActivityCompat#requestPermissions doc
                     return@withContext
                 }
                 bluetoothSocket = device.createRfcommSocketToServiceRecord(SPP_UUID)
                 bluetoothSocket?.connect()
-                bluetoothSocket?.outputStream?.write(label.asFPSLCommand().toByteArray())
+                bluetoothSocket?.outputStream?.write(label.asTSPLCommand().toByteArray())
 
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Label Printed", Toast.LENGTH_SHORT).show()
