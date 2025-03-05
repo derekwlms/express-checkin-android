@@ -14,6 +14,7 @@ import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.FragmentAttendanceBinding
 import com.writestreams.checkin.service.AttendanceService
 import com.writestreams.checkin.service.CheckinService
+import com.writestreams.checkin.util.ApiKeys
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -71,8 +72,8 @@ class AttendanceFragment : Fragment() {
         }
 
         binding.emailButton.setOnClickListener {
-            val attendanceList = personsList.map { "${it.first_name} ${it.last_name}" }
-            val recipient = "derekwlms@gmail.com"
+            val attendanceList = personsList.map { "${it.first_name} ${it.last_name} - ${it.id}" }
+            val recipient = ApiKeys.EMAIL_RECIPIENTS
             attendanceService.emailAttendanceList(attendanceList, recipient)
         }
     }
