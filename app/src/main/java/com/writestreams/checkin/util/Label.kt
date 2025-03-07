@@ -26,8 +26,7 @@ class ParentLabel(
     private val dateTime: String,
     private val parentName1: String,
     private val parentName2: String,
-    private val checkinCode: String,
-    private val childNames: List<String>
+    private val checkinCode: String
 ) : BaseLabel() {
     override fun asTSPLCommand(): String {
         return """
@@ -76,7 +75,8 @@ class ChildLabel(
 class GuestLabel(
     private val dateTime: String,
     private val parentName: String,
-    private val checkinCode: String,
+    private val parentPhone: String,
+    private val parentEmail: String,
     private val childNames: List<String>
 ) : BaseLabel() {
     override fun asTSPLCommand(): String {
@@ -87,8 +87,10 @@ class GuestLabel(
             SIZE 59 mm,102 mm
             GAP 5mm,0
             CLS
-            TEXT 50,810,"1",90,2,2,"$parentName"
-            TEXT 200,810,"2",90,3,3,"$checkinCode"
+            TEXT 80,810,"1",90,3,3,"GUEST"
+            TEXT 150,810,"1",90,2,2,"$parentName"
+            TEXT 200,810,"1",90,2,2,"$parentPhone"
+            TEXT 255,810,"1",90,2,2,"$parentEmail"
             TEXT 350,810,"1",90,2,2,"$dateTime",
             $childTextLines
             PRINT 1

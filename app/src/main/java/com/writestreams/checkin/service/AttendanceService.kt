@@ -46,7 +46,7 @@ class AttendanceService(private val context: Context) {
     }
 
     fun emailAttendanceList(attendanceList: List<String>, recipient: String) {
-        val dateTime = DateTimeFormatter.ofPattern("MMM d, yyyy (h:mm a)").format(LocalDateTime.now())
+        val date = DateTimeFormatter.ofPattern("MMM d, yyyy").format(LocalDateTime.now())
         val combinedList = attendanceList.joinToString(separator = "\n")
         val credentials = Base64.getEncoder().encodeToString(ApiKeys.MAILGUN_API_KEY.toByteArray())
         val authorization = "Basic $credentials"
@@ -58,7 +58,7 @@ class AttendanceService(private val context: Context) {
                     authorization,
                     "Express Check-in <cmcheckin@sgcatlanta.org>",
                     recipient,
-                    "SGC Children's Ministry - Attendance List - $dateTime",
+                    "SGC Children's Ministry - Attendance List - $date",
                     combinedList,
                     htmlContent
                 ).execute()
