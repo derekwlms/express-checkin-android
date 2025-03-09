@@ -1,5 +1,6 @@
 package com.writestreams.checkin.ui.checkin
 
+import android.app.DatePickerDialog
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -12,6 +13,9 @@ import androidx.fragment.app.DialogFragment
 import com.writestreams.checkin.data.local.Guest
 import com.writestreams.checkin.databinding.DialogGuestCheckinBinding
 import com.writestreams.checkin.service.CheckinService
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Calendar
 
 class GuestCheckinDialogFragment : DialogFragment() {
 
@@ -47,6 +51,24 @@ class GuestCheckinDialogFragment : DialogFragment() {
             override fun afterTextChanged(s: Editable?) {}
         }
         requiredFields.forEach { it.addTextChangedListener(textWatcher) }
+
+        binding.dateOfBirthEditText.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            val year = calendar.get(Calendar.YEAR)
+            val month = calendar.get(Calendar.MONTH)
+            val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+            val datePickerDialog = DatePickerDialog(requireContext(), { _, selectedYear, selectedMonth, selectedDay ->
+                val selectedDate = LocalDateTime.of(selectedYear, selectedMonth + 1, selectedDay, 0, 0)
+                val formattedDate = selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                binding.dateOfBirthEditText.setText(formattedDate)
+            }, year, month, day)
+
+            // TODO Use a better/current date picker for current dates. Maybe Material, maybe dropdowns
+//            datePickerDialog.datePicker.calendarViewShown = false
+//            datePickerDialog.datePicker.spinnersShown = true
+            datePickerDialog.show()
+        }
 
         binding.doneButton.setOnClickListener {
             val guest = createGuest()
@@ -93,6 +115,7 @@ class GuestCheckinDialogFragment : DialogFragment() {
             lastName = binding.lastNameEditText.text.toString(),
             phoneNumber = binding.phoneNumberEditText.text.toString(),
             emailAddress = binding.emailAddressEditText.text.toString(),
+            dateOfBirth = LocalDateTime.parse(binding.dateOfBirthEditText.text.toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd")),
             addToDirectory = binding.addToDirectoryCheckBox.isChecked,
             childNames = childNames
         )

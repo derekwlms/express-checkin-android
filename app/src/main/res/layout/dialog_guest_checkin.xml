@@ -61,6 +61,17 @@
                 android:inputType="textEmailAddress"
                 android:importantForAccessibility="yes" />
 
+                <EditText
+                    android:id="@+id/dateOfBirthEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Date of Birth"
+                    android:minHeight="48dp"
+                    android:inputType="date"
+                    android:focusable="false"
+                    android:clickable="true"
+                    android:importantForAccessibility="yes" />
+
             <CheckBox
                 android:id="@+id/addToDirectoryCheckBox"
                 android:layout_width="wrap_content"
