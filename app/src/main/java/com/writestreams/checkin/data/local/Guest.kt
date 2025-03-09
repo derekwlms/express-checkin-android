@@ -9,8 +9,12 @@ data class Guest(
     val emailAddress: String,
     var dateOfBirth: LocalDateTime?,
     val addToDirectory: Boolean,
-    val childNames: List<String>,
+    val children: List<GuestChild>,
     var checkinDateTime: String = "",
     var checkinCode: String = "",
     var checkinCounter: String = ""
-)
+) {
+    fun fullName(): String {
+        return "$firstName $lastName"
+    }
+}

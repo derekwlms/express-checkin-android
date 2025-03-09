@@ -126,12 +126,13 @@ class CheckinService(private val context: Context) {
         val parentName = "${guest.firstName} ${guest.lastName}"
         val parentLabel = ParentLabel(guest.checkinDateTime,
             parentName, "", guest.checkinCode)
+        val childNames = guest.children.map { it.fullName() }
         val guestLabel = GuestLabel(guest.checkinDateTime,
-            parentName, guest.phoneNumber, guest.emailAddress, guest.childNames)
+            parentName, guest.phoneNumber, guest.emailAddress, childNames)
         bluetoothPrintService.printLabel(guestLabel)    // For greeter to keep
-        guest.childNames.forEach {
+        guest.children.forEach {
             val childLabel = ChildLabel(guest.checkinDateTime, (checkinCounter++).toString(),
-                it, guest.phoneNumber, guest.checkinCode, parentName)
+                it.fullName(), guest.phoneNumber, guest.checkinCode, parentName)
             bluetoothPrintService.printLabel(childLabel)
         }
         bluetoothPrintService.printLabel(parentLabel)
@@ -170,7 +171,7 @@ class CheckinService(private val context: Context) {
     private fun emailGuestInfo(guest: Guest) {
         val parentName = "${guest.firstName} ${guest.lastName}"
         val date = DateTimeFormatter.ofPattern("MMM d, yyyy").format(LocalDateTime.now())
-        val childNames = guest.childNames.joinToString(separator = "\n")
+        val childNames = guest.children.joinToString(separator = "\n") { it.fullName() }
         val body = "$parentName\n${guest.phoneNumber}\n${guest.emailAddress}\n\nChildren:\n$childNames"
         val credentials = Base64.getEncoder().encodeToString(ApiKeys.MAILGUN_API_KEY.toByteArray())
         val authorization = "Basic $credentials"

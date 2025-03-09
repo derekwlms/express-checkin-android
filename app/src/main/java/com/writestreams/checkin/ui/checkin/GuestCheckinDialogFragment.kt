@@ -7,11 +7,12 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import com.writestreams.checkin.data.local.Guest
+import com.writestreams.checkin.data.local.GuestChild
 import com.writestreams.checkin.databinding.DialogGuestCheckinBinding
+import com.writestreams.checkin.databinding.ItemChildBinding
 import com.writestreams.checkin.service.CheckinService
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -63,17 +64,13 @@ class GuestCheckinDialogFragment : DialogFragment() {
                 val formattedDate = selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
                 binding.dateOfBirthEditText.setText(formattedDate)
             }, year, month, day)
-
-            // TODO Use a better/current date picker for current dates. Maybe Material, maybe dropdowns
-//            datePickerDialog.datePicker.calendarViewShown = false
-//            datePickerDialog.datePicker.spinnersShown = true
             datePickerDialog.show()
         }
 
         binding.doneButton.setOnClickListener {
             val guest = createGuest()
             checkinService.checkInGuest(guest)
-            Toast.makeText(requireContext(), "Guest added: ${guest.firstName} ${guest.lastName}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Guest added: ${guest.fullName()}", Toast.LENGTH_SHORT).show()
             dismiss()
         }
 
@@ -84,15 +81,8 @@ class GuestCheckinDialogFragment : DialogFragment() {
         binding.addChildButton.setOnClickListener {
             if (childCount < 10) {
                 childCount++
-                val editText = EditText(requireContext()).apply {
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
-                    hint = "Child Name $childCount"
-                    minHeight = 48.dpToPx()
-                }
-                binding.childNamesContainer.addView(editText)
+                val childViewBinding = ItemChildBinding.inflate(layoutInflater, binding.childNamesContainer, false)
+                binding.childNamesContainer.addView(childViewBinding.root)
             } else {
                 Toast.makeText(requireContext(), "Please add again for more than 10 child names",
                     Toast.LENGTH_SHORT).show()
@@ -102,22 +92,27 @@ class GuestCheckinDialogFragment : DialogFragment() {
     }
 
     private fun createGuest(): Guest {
-        val childNames = mutableListOf<String>()
-        binding.childNameEditText1.text.toString()
-            .takeIf { it.isNotEmpty() }?.let { childNames.add(it) }
-        // maybe time for ktx
+        val children = mutableListOf<GuestChild>()
         for (i in 0 until binding.childNamesContainer.childCount) {
-            val childNameEditText = binding.childNamesContainer.getChildAt(i) as EditText
-            childNames.add(childNameEditText.text.toString())
+            val childViewBinding = ItemChildBinding.bind(binding.childNamesContainer.getChildAt(i))
+            val childName = childViewBinding.childNameEditText.text.toString()
+            val childDob = childViewBinding.childDobEditText.text.toString()
+            val childSpecialNeeds = childViewBinding.childSpecialNeedsEditText.text.toString()
+            if (childName.isNotEmpty()) {
+//                val dateOfBirth = LocalDateTime.parse(childDob, DateTimeFormatter.ofPattern("MM/dd/yyyy"))
+                val dateOfBirth = null
+                children.add(GuestChild(childName, "", dateOfBirth, childSpecialNeeds))
+            }
         }
         return Guest(
             firstName = binding.firstNameEditText.text.toString(),
             lastName = binding.lastNameEditText.text.toString(),
             phoneNumber = binding.phoneNumberEditText.text.toString(),
             emailAddress = binding.emailAddressEditText.text.toString(),
-            dateOfBirth = LocalDateTime.parse(binding.dateOfBirthEditText.text.toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+//            dateOfBirth = LocalDateTime.parse(binding.dateOfBirthEditText.text.toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+            dateOfBirth = null,
             addToDirectory = binding.addToDirectoryCheckBox.isChecked,
-            childNames = childNames
+            children = children
         )
     }
 
@@ -132,9 +127,5 @@ class GuestCheckinDialogFragment : DialogFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    private fun Int.dpToPx(): Int {
-        return (this * resources.displayMetrics.density).toInt()
     }
 }

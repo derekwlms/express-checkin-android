@@ -1,0 +1,33 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <EditText
+        android:id="@+id/childNameEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Child Name"
+        android:minHeight="48dp"
+        android:inputType="textPersonName|textCapWords"
+        android:importantForAccessibility="yes" />
+
+    <EditText
+        android:id="@+id/childDobEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Child Date of Birth"
+        android:minHeight="48dp"
+        android:inputType="date"
+        android:importantForAccessibility="yes" />
+
+    <EditText
+        android:id="@+id/childSpecialNeedsEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Special Needs"
+        android:minHeight="48dp"
+        android:inputType="text"
+        android:importantForAccessibility="yes" />
+</LinearLayout>
