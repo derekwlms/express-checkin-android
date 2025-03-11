@@ -1,10 +1,8 @@
 ## To do
 
-- Guest check-in 
-  - Guest child - separate first and last name, required names & DOB
-  - Date picker for guest child
-  - Earlier reference dates
+- Guest check-in
   - Add to breeze
+  - HTML email
   - Make it easier to type, formatters
   - Guest check-in - require child name, child DOB, special needs
 - Member check-in

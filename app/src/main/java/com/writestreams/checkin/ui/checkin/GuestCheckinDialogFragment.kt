@@ -1,3 +1,4 @@
+// GuestCheckinDialogFragment.kt
 package com.writestreams.checkin.ui.checkin
 
 import android.app.DatePickerDialog
@@ -14,7 +15,7 @@ import com.writestreams.checkin.data.local.GuestChild
 import com.writestreams.checkin.databinding.DialogGuestCheckinBinding
 import com.writestreams.checkin.databinding.ItemChildBinding
 import com.writestreams.checkin.service.CheckinService
-import java.time.LocalDateTime
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 
@@ -55,13 +56,14 @@ class GuestCheckinDialogFragment : DialogFragment() {
 
         binding.dateOfBirthEditText.setOnClickListener {
             val calendar = Calendar.getInstance()
+            calendar.set(2000, Calendar.JANUARY, 1)
             val year = calendar.get(Calendar.YEAR)
             val month = calendar.get(Calendar.MONTH)
             val day = calendar.get(Calendar.DAY_OF_MONTH)
 
             val datePickerDialog = DatePickerDialog(requireContext(), { _, selectedYear, selectedMonth, selectedDay ->
-                val selectedDate = LocalDateTime.of(selectedYear, selectedMonth + 1, selectedDay, 0, 0)
-                val formattedDate = selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                val selectedDate = LocalDate.of(selectedYear, selectedMonth + 1, selectedDay)
+                val formattedDate = selectedDate.format(DateTimeFormatter.ofPattern("MM/dd/yyyy"))
                 binding.dateOfBirthEditText.setText(formattedDate)
             }, year, month, day)
             datePickerDialog.show()
@@ -82,6 +84,19 @@ class GuestCheckinDialogFragment : DialogFragment() {
             if (childCount < 10) {
                 childCount++
                 val childViewBinding = ItemChildBinding.inflate(layoutInflater, binding.childNamesContainer, false)
+                childViewBinding.childDobEditText.setOnClickListener {
+                    val calendar = Calendar.getInstance()
+                    calendar.set(2020, Calendar.JANUARY, 1)
+                    val year = calendar.get(Calendar.YEAR)
+                    val month = calendar.get(Calendar.MONTH)
+                    val day = calendar.get(Calendar.DAY_OF_MONTH)
+                    val childDobDatePickerDialog = DatePickerDialog(requireContext(), { _, selectedYear, selectedMonth, selectedDay ->
+                        val selectedDate = LocalDate.of(selectedYear, selectedMonth + 1, selectedDay)
+                        val formattedDate = selectedDate.format(DateTimeFormatter.ofPattern("MM/dd/yyyy"))
+                        childViewBinding.childDobEditText.setText(formattedDate)
+                    }, year, month, day)
+                    childDobDatePickerDialog.show()
+                }
                 binding.childNamesContainer.addView(childViewBinding.root)
             } else {
                 Toast.makeText(requireContext(), "Please add again for more than 10 child names",
@@ -95,22 +110,27 @@ class GuestCheckinDialogFragment : DialogFragment() {
         val children = mutableListOf<GuestChild>()
         for (i in 0 until binding.childNamesContainer.childCount) {
             val childViewBinding = ItemChildBinding.bind(binding.childNamesContainer.getChildAt(i))
-            val childName = childViewBinding.childNameEditText.text.toString()
+            val childFirstName = childViewBinding.childFirstNameEditText.text.toString()
+            val childLastName = childViewBinding.childLastNameEditText.text.toString()
             val childDob = childViewBinding.childDobEditText.text.toString()
             val childSpecialNeeds = childViewBinding.childSpecialNeedsEditText.text.toString()
-            if (childName.isNotEmpty()) {
-//                val dateOfBirth = LocalDateTime.parse(childDob, DateTimeFormatter.ofPattern("MM/dd/yyyy"))
-                val dateOfBirth = null
-                children.add(GuestChild(childName, "", dateOfBirth, childSpecialNeeds))
+            if (childFirstName.isNotEmpty()) {
+                val dateOfBirth = runCatching {
+                    LocalDate.parse(childDob, DateTimeFormatter.ofPattern("MM/dd/yyyy"))
+                }.getOrNull()
+                children.add(GuestChild(childFirstName, childLastName, dateOfBirth, childSpecialNeeds))
             }
         }
+        val dateOfBirth = runCatching {
+            LocalDate.parse(binding.dateOfBirthEditText.text.toString(),
+                DateTimeFormatter.ofPattern("MM/dd/yyyy"))
+        }.getOrNull()
         return Guest(
             firstName = binding.firstNameEditText.text.toString(),
             lastName = binding.lastNameEditText.text.toString(),
             phoneNumber = binding.phoneNumberEditText.text.toString(),
             emailAddress = binding.emailAddressEditText.text.toString(),
-//            dateOfBirth = LocalDateTime.parse(binding.dateOfBirthEditText.text.toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd")),
-            dateOfBirth = null,
+            dateOfBirth = dateOfBirth,
             addToDirectory = binding.addToDirectoryCheckBox.isChecked,
             children = children
         )

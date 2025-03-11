@@ -5,10 +5,19 @@
     android:padding="8dp">
 
     <EditText
-        android:id="@+id/childNameEditText"
+        android:id="@+id/childFirstNameEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Child Name"
+        android:hint="Child First Name"
+        android:minHeight="48dp"
+        android:inputType="textPersonName|textCapWords"
+        android:importantForAccessibility="yes" />
+
+    <EditText
+        android:id="@+id/childLastNameEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Child Last Name"
         android:minHeight="48dp"
         android:inputType="textPersonName|textCapWords"
         android:importantForAccessibility="yes" />
@@ -20,6 +29,8 @@
         android:hint="Child Date of Birth"
         android:minHeight="48dp"
         android:inputType="date"
+        android:focusable="false"
+        android:clickable="true"
         android:importantForAccessibility="yes" />
 
     <EditText
