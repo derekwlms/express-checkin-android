@@ -150,6 +150,43 @@
 			"response": []
 		},
 		{
+			"name": "show person",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/people/12990277",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"people",
+						"12990277"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list profile fields",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/profile",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"profile"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "https://api.breezechms.com/api/v2/event-instances?filter\\[start_datetime:gt:date\\]=2024-10-25&filter\\[start_datetime:lt:date\\]=2024-12-07&filter\\[category_id:contains:array\\]=18707,16521,17678",
 			"request": {
 				"method": "GET",

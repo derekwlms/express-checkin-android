@@ -20,4 +20,26 @@ interface BreezeChmsApiService {
         @Query("instance_id") instanceId: String,
         @Query("direction") direction: String = "in"
     ): Response<Void>
+
+    @Headers("Api-Key: ${ApiKeys.BREEZE_API_KEY}")
+    @GET("events/attendance/delete")
+    suspend fun deleteCheckin(
+        @Query("person_id") personId: String,
+        @Query("instance_id") instanceId: String
+    ): Response<Void>
+
+    @Headers("Api-Key: ${ApiKeys.BREEZE_API_KEY}")
+    @GET("people/add")
+    suspend fun addPerson(
+        @Query("first") firstName: String,
+        @Query("last") lastName: String,
+        @Query("fields_json") fields: String
+    ): Response<Void>
+
+    @Headers("Api-Key: ${ApiKeys.BREEZE_API_KEY}")
+    @GET("people/update")
+    suspend fun updatePerson(
+        @Query("person_id") personId: String,
+        @Query("fields_json") fields: String
+    ): Response<Void>
 }

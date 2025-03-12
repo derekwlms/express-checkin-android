@@ -150,7 +150,8 @@ class CheckinService(private val context: Context) {
 
     private suspend fun checkOutWithBreeze(person: Person, breezeInstanceId: String) {
         Log.d("checkOutWithBreeze", "Checked out ${person.first_name} ${person.last_name}")
-        apiService.checkIn(person.id, breezeInstanceId, "out")
+//        apiService.checkIn(person.id, breezeInstanceId, "out")
+        apiService.deleteCheckin(person.id, breezeInstanceId)
     }
     
     private fun getParentInfo(parentPersons: List<Person?>): Triple<String, String, String> {
