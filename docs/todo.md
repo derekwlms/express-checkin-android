@@ -4,12 +4,10 @@
   - Add to breeze
   - HTML email
   - Make it easier to type, formatters
-  - Guest check-in - require child name, child DOB, special needs
 - Member check-in
-  - Allow adding child to existing parent
-  - Add to Breeze
+  - Add child to existing parent - print label, add to attendance
+  - Add new child (for existing parent) to Breeze
 - Check-in lists
-    - Delete check-in (not just check out)
     - Search - phone number
     - Search - first and last name
 - Misc

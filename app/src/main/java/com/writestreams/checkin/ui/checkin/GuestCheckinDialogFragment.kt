@@ -48,7 +48,7 @@ class GuestCheckinDialogFragment : DialogFragment() {
         val textWatcher = object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                binding.doneButton.isEnabled = requiredFields.all { it.text.isNotEmpty() }
+                binding.doneButton.isEnabled = requiredFields.all { it.text.isNotEmpty() } && areAllChildFieldsValid()
             }
             override fun afterTextChanged(s: Editable?) {}
         }
@@ -97,9 +97,10 @@ class GuestCheckinDialogFragment : DialogFragment() {
                     }, year, month, day)
                     childDobDatePickerDialog.show()
                 }
+                addTextWatchersToChildFields(childViewBinding)
                 binding.childNamesContainer.addView(childViewBinding.root)
             } else {
-                Toast.makeText(requireContext(), "Please add again for more than 10 child names",
+                Toast.makeText(requireContext(), "Please add again for more than 10 children",
                     Toast.LENGTH_SHORT).show()
             }
         }
@@ -134,6 +135,35 @@ class GuestCheckinDialogFragment : DialogFragment() {
             addToDirectory = binding.addToDirectoryCheckBox.isChecked,
             children = children
         )
+    }
+
+    private fun addTextWatchersToChildFields(childViewBinding: ItemChildBinding) {
+        val childFields = listOf(
+            childViewBinding.childFirstNameEditText,
+            childViewBinding.childLastNameEditText,
+            childViewBinding.childDobEditText
+        )
+        val textWatcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                binding.doneButton.isEnabled = areAllChildFieldsValid()
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        }
+        childFields.forEach { it.addTextChangedListener(textWatcher) }
+    }
+
+    private fun areAllChildFieldsValid(): Boolean {
+        for (i in 0 until binding.childNamesContainer.childCount) {
+            val childViewBinding = ItemChildBinding.bind(binding.childNamesContainer.getChildAt(i))
+            val childFirstName = childViewBinding.childFirstNameEditText.text.toString()
+            val childLastName = childViewBinding.childLastNameEditText.text.toString()
+            val childDob = childViewBinding.childDobEditText.text.toString()
+            if (childFirstName.isNotEmpty() && (childLastName.isEmpty() || childDob.isEmpty())) {
+                return false
+            }
+        }
+        return true
     }
 
     override fun onStart() {
