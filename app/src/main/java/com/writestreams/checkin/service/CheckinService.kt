@@ -170,10 +170,12 @@ class CheckinService(private val context: Context) {
     }
 
     private fun emailGuestInfo(guest: Guest) {
-        val parentName = "${guest.firstName} ${guest.lastName}"
+        val parentName = guest.fullName()
         val date = DateTimeFormatter.ofPattern("MMM d, yyyy").format(LocalDateTime.now())
-        val childNames = guest.children.joinToString(separator = "\n") { it.fullName() }
-        val body = "$parentName\n${guest.phoneNumber}\n${guest.emailAddress}\n\nChildren:\n$childNames"
+        var body = "$parentName - ${guest.phoneNumber} - ${guest.emailAddress} ${guest.dateOfBirth}\n\nChildren:\n\n"
+        for (child in guest.children) {
+            body += "${child.fullName()} - ${child.dateOfBirth} - ${child.specialNeeds}\n"
+        }
         val credentials = Base64.getEncoder().encodeToString(ApiKeys.MAILGUN_API_KEY.toByteArray())
         val authorization = "Basic $credentials"
 
@@ -185,7 +187,7 @@ class CheckinService(private val context: Context) {
                     ApiKeys.EMAIL_RECIPIENTS,
                     "SGC Children's Ministry - Guest - $parentName - $date",
                     body,
-                    body
+                    body.replace("\n", "<br />")
                 ).execute()
 
                 withContext(Dispatchers.Main) {
