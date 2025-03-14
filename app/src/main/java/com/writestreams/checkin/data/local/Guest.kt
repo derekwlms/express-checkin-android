@@ -8,7 +8,6 @@ data class Guest(
     val phoneNumber: String,
     val emailAddress: String,
     var dateOfBirth: LocalDate?,
-    val addToDirectory: Boolean,
     val children: List<GuestChild>,
     var checkinDateTime: String = "",
     var checkinCode: String = "",

@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.writestreams.checkin.data.local.GuestChild
 import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.databinding.DialogFamilyCheckinBinding
 import com.writestreams.checkin.databinding.ItemChildBinding
@@ -51,7 +52,7 @@ class FamilyCheckinDialogFragment(private val person: Person) : DialogFragment()
 
         binding.doneButton.setOnClickListener {
             val checkedFamilyMembers = adapter.getCheckedFamilyMembers()
-            checkinService.checkinFamily(familyMembers, checkedFamilyMembers)
+            checkinService.checkinFamily(familyMembers, checkedFamilyMembers, getNewChildren())
             dismiss()
         }
 
@@ -82,6 +83,24 @@ class FamilyCheckinDialogFragment(private val person: Person) : DialogFragment()
             childDobDatePickerDialog.show()
         }
         binding.childNamesContainer.addView(childViewBinding.root)
+    }
+
+    private fun getNewChildren(): List<GuestChild> {
+        val children = mutableListOf<GuestChild>()
+        for (i in 0 until binding.childNamesContainer.childCount) {
+            val childViewBinding = ItemChildBinding.bind(binding.childNamesContainer.getChildAt(i))
+            val childFirstName = childViewBinding.childFirstNameEditText.text.toString()
+            val childLastName = childViewBinding.childLastNameEditText.text.toString()
+            val childDob = childViewBinding.childDobEditText.text.toString()
+            val childSpecialNeeds = childViewBinding.childSpecialNeedsEditText.text.toString()
+            if (childFirstName.isNotEmpty()) {
+                val dateOfBirth = runCatching {
+                    LocalDate.parse(childDob, DateTimeFormatter.ofPattern("MM/dd/yyyy"))
+                }.getOrNull()
+                children.add(GuestChild(childFirstName, childLastName, dateOfBirth, childSpecialNeeds))
+            }
+        }
+        return children
     }
 
     override fun onStart() {

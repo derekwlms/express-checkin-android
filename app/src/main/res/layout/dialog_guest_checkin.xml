@@ -76,13 +76,6 @@
                     android:clickable="true"
                     android:importantForAccessibility="yes" />
 
-                <CheckBox
-                    android:id="@+id/addToDirectoryCheckBox"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Add to directory"
-                    android:layout_marginTop="8dp" />
-
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

@@ -132,7 +132,6 @@ class GuestCheckinDialogFragment : DialogFragment() {
             phoneNumber = binding.phoneNumberEditText.text.toString(),
             emailAddress = binding.emailAddressEditText.text.toString(),
             dateOfBirth = dateOfBirth,
-            addToDirectory = binding.addToDirectoryCheckBox.isChecked,
             children = children
         )
     }

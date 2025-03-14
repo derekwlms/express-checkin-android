@@ -6,99 +6,103 @@
     android:layout_height="match_parent"
     tools:context=".ui.settings.SettingsFragment">
 
-    <TextView
-        android:id="@+id/text_settings"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:textAlignment="center"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_height="match_parent">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="16dp">
-
-        <Spinner
-            android:id="@+id/deviceAddressSpinner"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:entries="@array/device_addresses"
-            android:textSize="24sp"
-            android:minHeight="48dp" />
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <EditText
-            android:id="@+id/labelTextEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Label Text"
-            android:inputType="text"
-            android:lines="3"
-            android:minHeight="48dp"
-            android:text="SGC Woodstock,Check-in" />
+            <TextView
+                android:id="@+id/text_settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:textAlignment="center"
+                android:textSize="20sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-        <Button
-            android:id="@+id/printButton"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Test Print"/>
+            <Spinner
+                android:id="@+id/deviceAddressSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:entries="@array/device_addresses"
+                android:textSize="24sp"
+                android:minHeight="48dp" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?android:attr/listDivider"
-            android:layout_marginTop="32dp"
-            android:layout_marginBottom="32dp"/>
+            <EditText
+                android:id="@+id/labelTextEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Label Text"
+                android:inputType="text"
+                android:lines="3"
+                android:minHeight="48dp"
+                android:text="SGC Woodstock,Check-in" />
 
-        <DatePicker
-            android:id="@+id/checkinDatePicker"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"/>
+            <Button
+                android:id="@+id/printButton"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Test Print"/>
 
-        <TextView
-            android:id="@+id/breezeInstanceIdTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"/>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?android:attr/listDivider"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="32dp"/>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?android:attr/listDivider"
-            android:layout_marginTop="32dp"
-            android:layout_marginBottom="32dp"/>
+            <DatePicker
+                android:id="@+id/checkinDatePicker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="32dp"/>
 
-        <Button
-            android:id="@+id/resetCheckinsButton"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:text="Reset Checkins" />
+            <TextView
+                android:id="@+id/breezeInstanceIdTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"/>
 
-        <Button
-            android:id="@+id/getUpdatesButton"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:text="Get Updates"/>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?android:attr/listDivider"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="32dp"/>
 
-    </LinearLayout>
+            <Button
+                android:id="@+id/resetCheckinsButton"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:text="Reset Checkins" />
 
-    <TextView
-        android:id="@+id/versionTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="64dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintRight_toRightOf="parent" />
+            <Button
+                android:id="@+id/getUpdatesButton"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:text="Get Updates"/>
 
+            <TextView
+                android:id="@+id/versionTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="64dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintRight_toRightOf="parent" />
+
+        </LinearLayout>
+    </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

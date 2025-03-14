@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import com.writestreams.checkin.data.local.FamilyMember
 import com.writestreams.checkin.data.local.Guest
+import com.writestreams.checkin.data.local.GuestChild
 import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.data.network.BreezeChmsApiService
 import com.writestreams.checkin.data.network.MailgunService
@@ -62,13 +63,16 @@ class CheckinService(private val context: Context) {
         mailgunService = mailRetrofit.create(MailgunService::class.java)
     }
 
-    fun checkinFamily(allFamilyMembers: List<FamilyMember>, checkedFamilyMembers: Set<FamilyMember>) {
+    fun checkinFamily(existingFamilyMembers: List<FamilyMember>,
+                      checkedFamilyMembers: Set<FamilyMember>,
+                      newChildren: List<GuestChild>) {
+        /// TODO ZZZZ Add any newChildren to Breeze
         val currentDateTime = LocalDateTime.now()
         val formattedDateTime = dateTimeFormatter.format(currentDateTime)
         val checkinCode = Random.nextInt(1000, 9999).toString()
         val breezeInstanceId = getBreezeInstanceId()
         CoroutineScope(Dispatchers.IO).launch {
-            val parentFamilyMembers = allFamilyMembers.filter { it.family_role_id != FAMILY_ROLE_CHILD }
+            val parentFamilyMembers = existingFamilyMembers.filter { it.family_role_id != FAMILY_ROLE_CHILD }
             val parentPersons = parentFamilyMembers.map { repository.getPersonById(it.person_id) }
             val childPersons = mutableListOf<Person>()
             for (member in checkedFamilyMembers) {
@@ -105,6 +109,7 @@ class CheckinService(private val context: Context) {
             guest.checkinCounter = (++checkinCounter).toString()
             printGuestLabels(guest)
             emailGuestInfo(guest)
+            addGuestToBreeze(guest)
         }
     }
 
@@ -204,5 +209,10 @@ class CheckinService(private val context: Context) {
                 Log.e("AttendanceService.emailAttendanceList exception", e.message, e)
             }
         }
+    }
+
+    private fun addGuestToBreeze(guest: Guest) {
+        Log.d("addGuestToBreeze:", guest.toString())
+        // TODO ZZZ Finish
     }
 }
