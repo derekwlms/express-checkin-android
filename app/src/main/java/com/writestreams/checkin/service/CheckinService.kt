@@ -66,7 +66,6 @@ class CheckinService(private val context: Context) {
     fun checkinFamily(existingFamilyMembers: List<FamilyMember>,
                       checkedFamilyMembers: Set<FamilyMember>,
                       newChildren: List<GuestChild>) {
-        /// TODO ZZZZ Add any newChildren to Breeze
         val currentDateTime = LocalDateTime.now()
         val formattedDateTime = dateTimeFormatter.format(currentDateTime)
         val checkinCode = Random.nextInt(1000, 9999).toString()
@@ -74,7 +73,6 @@ class CheckinService(private val context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             val parentFamilyMembers = existingFamilyMembers.filter { it.family_role_id != FAMILY_ROLE_CHILD }
             val parentPersons = parentFamilyMembers.map { repository.getPersonById(it.person_id) }
-            val childPersons = mutableListOf<Person>()
             for (member in checkedFamilyMembers) {
                 val childPerson = repository.getPersonById(member.person_id)
                 childPerson?.let {
@@ -83,8 +81,18 @@ class CheckinService(private val context: Context) {
                     it.checkinCounter = (++checkinCounter).toString()
                     repository.updatePerson(it)
                     printChildLabel(it, parentPersons, formattedDateTime)
-                    checkInWithBreeze(it, currentDateTime, breezeInstanceId)
-                    childPersons.add(childPerson)
+                    checkInWithBreeze(it.id, currentDateTime, breezeInstanceId)
+                }
+            }
+            for (guestChild in newChildren) {
+                val guest = guestChild.asGuest()
+                guest.let {
+                    it.checkinDateTime = formattedDateTime
+                    it.checkinCode = checkinCode
+                    it.checkinCounter = (++checkinCounter).toString()
+                    printGuestChildLabel(it, parentPersons, formattedDateTime)
+                    addNewChildToBreeze(it, parentPersons.first()!!)
+                    emailGuestInfo(guest)
                 }
             }
             printParentLabel(parentPersons, checkinCode, formattedDateTime)
@@ -121,6 +129,14 @@ class CheckinService(private val context: Context) {
         bluetoothPrintService.printLabel(childLabel)
     }
 
+    private suspend fun printGuestChildLabel(guest: Guest, parentPersons: List<Person?>, formattedDateTime: String) {
+        val (parentName, parent2Name, phoneNumber) = getParentInfo(parentPersons)
+        val childName = "${guest.firstName} ${guest.lastName}"
+        val childLabel = ChildLabel(formattedDateTime, guest.checkinCounter,
+            childName, phoneNumber, guest.checkinCode, "$parentName - $parent2Name")
+        bluetoothPrintService.printLabel(childLabel)
+    }
+
     private suspend fun printParentLabel(parentPersons: List<Person?>, checkinCode: String, formattedDateTime: String) {
         val (parentName, parent2Name, _) = getParentInfo(parentPersons)
         val parentLabel = ParentLabel(formattedDateTime,
@@ -143,13 +159,13 @@ class CheckinService(private val context: Context) {
         bluetoothPrintService.printLabel(parentLabel)
     }
 
-    private suspend fun checkInWithBreeze(child: Person, currentDateTime: LocalDateTime, breezeInstanceId: String) {
-        Log.d("checkinFamily", "Checked in child: ${child.first_name} ${child.last_name} at $currentDateTime")
+    private suspend fun checkInWithBreeze(childId: String, currentDateTime: LocalDateTime, breezeInstanceId: String) {
+        Log.d("checkinFamily", "Checked in child: $childId at $currentDateTime")
         try {
-            apiService.checkIn(child.id, breezeInstanceId)
+            apiService.checkIn(childId, breezeInstanceId)
         } catch (e: Exception) {
             Log.e("checkInWithBreeze",
-                "Exception calling checkIn API for ${child.first_name} ${child.last_name}", e)
+                "Exception calling checkIn API for child id $childId", e)
         }
     }
 
@@ -158,7 +174,7 @@ class CheckinService(private val context: Context) {
 //        apiService.checkIn(person.id, breezeInstanceId, "out")
         apiService.deleteCheckin(person.id, breezeInstanceId)
     }
-    
+
     private fun getParentInfo(parentPersons: List<Person?>): Triple<String, String, String> {
         val parentInfo = Triple(
             parentPersons.getOrNull(0)?.let { "${it.first_name} ${it.last_name}" } ?: "",
@@ -194,7 +210,6 @@ class CheckinService(private val context: Context) {
                     body,
                     body.replace("\n", "<br />")
                 ).execute()
-
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful) {
                         Toast.makeText(context, "Emailed the guest info", Toast.LENGTH_SHORT).show()
@@ -211,8 +226,64 @@ class CheckinService(private val context: Context) {
         }
     }
 
-    private fun addGuestToBreeze(guest: Guest) {
-        Log.d("addGuestToBreeze:", guest.toString())
-        // TODO ZZZ Finish
+    private suspend fun addGuestToBreeze(guest: Guest) {
+        try {
+            val fieldsJson = """ [
+                { "field_id": "300984657", "field_type": "birthdate", "response": "${guest.dateOfBirth}" },
+                { "field_id": "194881525", "field_type": "phone", "response": "${guest.phoneNumber}" },
+                { "field_id": "951543614", "field_type": "email", "response": "${guest.emailAddress}" }
+             """
+            Log.d("addGuestToBreeze - add new parent:", guest.toString())
+            apiService.addPerson(guest.firstName, guest.lastName, fieldsJson)
+        } catch (e: Exception) {
+            Log.e("addGuestToBreeze", "Exception calling addPerson for the parent", e)
+        }
+        for (guestChild in guest.children) {
+            Log.d("addGuestToBreeze - add child:", guestChild.toString())
+            val fieldsJson = """ [
+                { "field_id": "300984657", "field_type": "birthdate", "response": "${guestChild.dateOfBirth}" },
+                { "field_id": "194881525", "field_type": "phone", "response": "${guest.phoneNumber}" },
+                { "field_id": "951543614", "field_type": "email", "response": "${guest.emailAddress}" }
+            """
+            var breezeId: String? = null
+            try {
+                val responseJson = apiService.addPerson(guestChild.firstName, guestChild.lastName, fieldsJson)
+                Log.d("addGuestToBreeze - guestChild - apiService.addPerson response:", responseJson.toString())
+                breezeId = responseJson.body()?.get("id")?.asString
+            } catch (e: Exception) {
+                Log.e("addGuestToBreeze - guestChild - apiService.addPerson",
+                    "Exception calling add person for ${guestChild.firstName} ${guestChild.lastName}", e)
+            }
+            if (breezeId != null) {
+                checkInWithBreeze(breezeId, LocalDateTime.now(), getBreezeInstanceId())
+            }
+        }
+    }
+
+    private suspend fun addNewChildToBreeze(guest: Guest, parent: Person) {
+        try {
+            Log.d("addNewChildToBreeze - update existing parent for new child:", parent.toString())
+            val fieldsJson = "[]"      // TODO - add family: [
+            apiService.updatePerson(parent.id, fieldsJson)
+        } catch (e: Exception) {
+            Log.e("addNewChildToBreeze", "Exception calling updatePerson to add the child to the parent", e)
+        }
+        val fieldsJson = """ [
+            { "field_id": "300984657", "field_type": "birthdate", "response": "${guest.dateOfBirth}" },
+            { "field_id": "194881525", "field_type": "phone", "response": "${guest.phoneNumber}" },
+            { "field_id": "951543614", "field_type": "email", "response": "${guest.emailAddress}" }
+        """
+        var breezeId: String? = null
+        try {
+            val responseJson = apiService.addPerson(guest.firstName, guest.lastName, fieldsJson)
+            Log.d("addNewChildToBreeze - apiService.addPerson response:", responseJson.toString())
+            breezeId = responseJson.body()?.get("id")?.asString
+        } catch (e: Exception) {
+            Log.e("addNewChildToBreeze - apiService.addPerson",
+                "Exception calling add person for ${guest.firstName} ${guest.lastName}", e)
+        }
+        if (breezeId != null) {
+            checkInWithBreeze(breezeId, LocalDateTime.now(), getBreezeInstanceId())
+        }
     }
 }

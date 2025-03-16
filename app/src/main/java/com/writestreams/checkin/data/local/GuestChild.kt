@@ -11,4 +11,15 @@ data class GuestChild(
     fun fullName(): String {
         return "$firstName $lastName"
     }
+
+    fun asGuest(): Guest {
+        return Guest(
+            firstName = this.firstName,
+            lastName = this.lastName,
+            dateOfBirth = this.dateOfBirth,
+            phoneNumber = "",
+            emailAddress = "",
+            children = emptyList()
+        )
+    }
 }

@@ -1,5 +1,6 @@
 package com.writestreams.checkin.data.network
 
+import com.google.gson.JsonObject
 import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.util.ApiKeys
 import retrofit2.Call
@@ -34,12 +35,12 @@ interface BreezeChmsApiService {
         @Query("first") firstName: String,
         @Query("last") lastName: String,
         @Query("fields_json") fields: String
-    ): Response<Void>
+    ): Response<JsonObject>
 
     @Headers("Api-Key: ${ApiKeys.BREEZE_API_KEY}")
     @GET("people/update")
     suspend fun updatePerson(
         @Query("person_id") personId: String,
         @Query("fields_json") fields: String
-    ): Response<Void>
+    ): Response<JsonObject>
 }

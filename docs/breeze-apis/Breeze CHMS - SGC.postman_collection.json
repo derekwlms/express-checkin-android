@@ -169,6 +169,122 @@
 			"response": []
 		},
 		{
+			"name": "add person",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/people/add?first=Test&last=Person6&fields_json='[{\"field_id\":\"300984657\",\"field_type\":\"birthdate\",\"response\":\"1\\/1\\/2015\"},{\"field_id\":\"951543614\",\"field_type\":\"email\",\"response\":true,\"details\":{\"address\":\"email@test6.com\"}},{\"field_id\":\"194881525\",\"field_type\":\"phone\",\"response\":true,\"details\":{\"phone_mobile\":\"111-111-1111\"}}]'",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"people",
+						"add"
+					],
+					"query": [
+						{
+							"key": "first",
+							"value": "Test"
+						},
+						{
+							"key": "last",
+							"value": "Person6"
+						},
+						{
+							"key": "fields_json",
+							"value": "'[{\"field_id\":\"300984657\",\"field_type\":\"birthdate\",\"response\":\"1\\/1\\/2015\"},{\"field_id\":\"951543614\",\"field_type\":\"email\",\"response\":true,\"details\":{\"address\":\"email@test6.com\"}},{\"field_id\":\"194881525\",\"field_type\":\"phone\",\"response\":true,\"details\":{\"phone_mobile\":\"111-111-1111\"}}]'"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update person",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/people/update?person_id=51851979&fields_json='[{\"field_id\":\"300984657\",\"field_type\":\"birthdate\",\"response\":\"1\\/1\\/2015\"},{\"field_id\":\"951543614\",\"field_type\":\"email\",\"response\":true,\"details\":{\"address\":\"email@test3.com\"}},{\"field_id\":\"194881525\",\"field_type\":\"phone\",\"response\":true,\"details\":{\"phone_mobile\":\"111-111-1111\"}}]'",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"people",
+						"update"
+					],
+					"query": [
+						{
+							"key": "person_id",
+							"value": "51851979"
+						},
+						{
+							"key": "fields_json",
+							"value": "'[{\"field_id\":\"300984657\",\"field_type\":\"birthdate\",\"response\":\"1\\/1\\/2015\"},{\"field_id\":\"951543614\",\"field_type\":\"email\",\"response\":true,\"details\":{\"address\":\"email@test3.com\"}},{\"field_id\":\"194881525\",\"field_type\":\"phone\",\"response\":true,\"details\":{\"phone_mobile\":\"111-111-1111\"}}]'"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete person",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/people/delete?person_id=51853035",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"people",
+						"delete"
+					],
+					"query": [
+						{
+							"key": "person_id",
+							"value": "51853035"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update person - birthdate only",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/people/update?person_id=51851979&fields_json='[{\"field_id\":\"birthdate\",\"field_type\":\"birthdate\",\"response\":\"2020-01-01\"}]'",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"people",
+						"update"
+					],
+					"query": [
+						{
+							"key": "person_id",
+							"value": "51851979"
+						},
+						{
+							"key": "fields_json",
+							"value": "'[{\"field_id\":\"birthdate\",\"field_type\":\"birthdate\",\"response\":\"2020-01-01\"}]'"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "list profile fields",
 			"request": {
 				"method": "GET",
@@ -319,7 +435,7 @@
 		},
 		{
 			"key": "instanceId",
-			"value": "",
+			"value": "210398278",
 			"type": "string"
 		}
 	]
