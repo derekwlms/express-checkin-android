@@ -8,34 +8,6 @@
 	},
 	"item": [
 		{
-			"name": "events",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{url}}/api/events?start=2025-02-01&end=2025-02-05",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"api",
-						"events"
-					],
-					"query": [
-						{
-							"key": "start",
-							"value": "2025-02-01"
-						},
-						{
-							"key": "end",
-							"value": "2025-02-05"
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "checkin - eligible people",
 			"request": {
 				"method": "GET",
@@ -126,7 +98,60 @@
 			"response": []
 		},
 		{
-			"name": "people",
+			"name": "events",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/events?start=2025-02-01&end=2025-02-05",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"events"
+					],
+					"query": [
+						{
+							"key": "start",
+							"value": "2025-02-01"
+						},
+						{
+							"key": "end",
+							"value": "2025-02-05"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "families - create family",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/families/create?people_ids_json=[51854125,51854131]",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"families",
+						"create"
+					],
+					"query": [
+						{
+							"key": "people_ids_json",
+							"value": "[51854125,51854131]"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "people - get all",
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -150,7 +175,7 @@
 			"response": []
 		},
 		{
-			"name": "show person",
+			"name": "people - show person",
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -169,12 +194,12 @@
 			"response": []
 		},
 		{
-			"name": "add person",
+			"name": "people - add person",
 			"request": {
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/people/add?first=Test&last=Person6&fields_json='[{\"field_id\":\"300984657\",\"field_type\":\"birthdate\",\"response\":\"1\\/1\\/2015\"},{\"field_id\":\"951543614\",\"field_type\":\"email\",\"response\":true,\"details\":{\"address\":\"email@test6.com\"}},{\"field_id\":\"194881525\",\"field_type\":\"phone\",\"response\":true,\"details\":{\"phone_mobile\":\"111-111-1111\"}}]'",
+					"raw": "{{url}}/api/people/add?first=Test&last=Person6&fields_json=[{\"field_id\":\"300984657\",\"field_type\":\"birthdate\",\"response\":\"1\\/1\\/2015\"},{\"field_id\":\"951543614\",\"field_type\":\"email\",\"response\":true,\"details\":{\"address\":\"email@test6.com\"}},{\"field_id\":\"194881525\",\"field_type\":\"phone\",\"response\":true,\"details\":{\"phone_mobile\":\"111-111-1111\"}}]",
 					"host": [
 						"{{url}}"
 					],
@@ -194,7 +219,7 @@
 						},
 						{
 							"key": "fields_json",
-							"value": "'[{\"field_id\":\"300984657\",\"field_type\":\"birthdate\",\"response\":\"1\\/1\\/2015\"},{\"field_id\":\"951543614\",\"field_type\":\"email\",\"response\":true,\"details\":{\"address\":\"email@test6.com\"}},{\"field_id\":\"194881525\",\"field_type\":\"phone\",\"response\":true,\"details\":{\"phone_mobile\":\"111-111-1111\"}}]'"
+							"value": "[{\"field_id\":\"300984657\",\"field_type\":\"birthdate\",\"response\":\"1\\/1\\/2015\"},{\"field_id\":\"951543614\",\"field_type\":\"email\",\"response\":true,\"details\":{\"address\":\"email@test6.com\"}},{\"field_id\":\"194881525\",\"field_type\":\"phone\",\"response\":true,\"details\":{\"phone_mobile\":\"111-111-1111\"}}]"
 						}
 					]
 				}
@@ -202,12 +227,12 @@
 			"response": []
 		},
 		{
-			"name": "update person",
+			"name": "people - update person - email",
 			"request": {
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/people/update?person_id=51851979&fields_json='[{\"field_id\":\"300984657\",\"field_type\":\"birthdate\",\"response\":\"1\\/1\\/2015\"},{\"field_id\":\"951543614\",\"field_type\":\"email\",\"response\":true,\"details\":{\"address\":\"email@test3.com\"}},{\"field_id\":\"194881525\",\"field_type\":\"phone\",\"response\":true,\"details\":{\"phone_mobile\":\"111-111-1111\"}}]'",
+					"raw": "{{url}}/api/people/update?person_id=51854125&fields_json=[{\"field_id\":\"951543614\",\"field_type\":\"email\",\"response\":true,\"details\":{\"address\":\"zach.taylorrr@yahoo.com\"}}]",
 					"host": [
 						"{{url}}"
 					],
@@ -219,11 +244,11 @@
 					"query": [
 						{
 							"key": "person_id",
-							"value": "51851979"
+							"value": "51854125"
 						},
 						{
 							"key": "fields_json",
-							"value": "'[{\"field_id\":\"300984657\",\"field_type\":\"birthdate\",\"response\":\"1\\/1\\/2015\"},{\"field_id\":\"951543614\",\"field_type\":\"email\",\"response\":true,\"details\":{\"address\":\"email@test3.com\"}},{\"field_id\":\"194881525\",\"field_type\":\"phone\",\"response\":true,\"details\":{\"phone_mobile\":\"111-111-1111\"}}]'"
+							"value": "[{\"field_id\":\"951543614\",\"field_type\":\"email\",\"response\":true,\"details\":{\"address\":\"zach.taylorrr@yahoo.com\"}}]"
 						}
 					]
 				}
@@ -231,7 +256,65 @@
 			"response": []
 		},
 		{
-			"name": "delete person",
+			"name": "people - update person - phone",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/people/update?person_id=51854131&fields_json=[{\"field_id\":\"194881525\",\"field_type\":\"phone\",\"response\":true,\"details\":{\"phone_mobile\":\"(770) 624-4554\"}}]",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"people",
+						"update"
+					],
+					"query": [
+						{
+							"key": "person_id",
+							"value": "51854131"
+						},
+						{
+							"key": "fields_json",
+							"value": "[{\"field_id\":\"194881525\",\"field_type\":\"phone\",\"response\":true,\"details\":{\"phone_mobile\":\"(770) 624-4554\"}}]"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "people - update person - family role x",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/people/update?person_id=51854131&fields_json=[{\"field_id\":\"62348923451\",\"field_type\":\"family_role \",\"response\":\"undefined\",\"details\":{\"person_id\":51854131,\"role_id\":2}}]",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"people",
+						"update"
+					],
+					"query": [
+						{
+							"key": "person_id",
+							"value": "51854131"
+						},
+						{
+							"key": "fields_json",
+							"value": "[{\"field_id\":\"62348923451\",\"field_type\":\"family_role \",\"response\":\"undefined\",\"details\":{\"person_id\":51854131,\"role_id\":2}}]"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "people - delete person",
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -256,36 +339,7 @@
 			"response": []
 		},
 		{
-			"name": "update person - birthdate only",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{url}}/api/people/update?person_id=51851979&fields_json='[{\"field_id\":\"birthdate\",\"field_type\":\"birthdate\",\"response\":\"2020-01-01\"}]'",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"api",
-						"people",
-						"update"
-					],
-					"query": [
-						{
-							"key": "person_id",
-							"value": "51851979"
-						},
-						{
-							"key": "fields_json",
-							"value": "'[{\"field_id\":\"birthdate\",\"field_type\":\"birthdate\",\"response\":\"2020-01-01\"}]'"
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "list profile fields",
+			"name": "profile - list profile fields",
 			"request": {
 				"method": "GET",
 				"header": [],
