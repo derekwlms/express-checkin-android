@@ -1,22 +1,19 @@
 ## To do
 
-- Guest check-in
-  - Add to breeze
-  - HTML email
+- Check-in - guest, new child
+  - DOB not saved to all places in Breeze
+  - HTML emails
   - Make it easier to type, formatters
-- Member check-in
-  - Add child to existing parent - print label, add to attendance
-  - Add new child (for existing parent) to Breeze
+  - Require fields for new child of existing member
+  - Add guests and new child to attendance list / database
 - Check-in lists
-    - Search - phone number
-    - Search - first and last name
+  - Search - phone number
+  - Search - first and last name
+- Attendance
+  - Show Breeze list (from API) - option to select local list or Breeze list?
+  - Auto-email lists?
 - Misc
   - Move label number
   - White background squircle of logo image (python)
   - Remote logs/monitoring. Crashlytics?
-  - OTA install?
-  - GHA build?
   - Switch to Material for views, validation, etc?
-
-
-

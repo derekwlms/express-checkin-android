@@ -44,6 +44,14 @@ data class Person(
         result = 31 * result + family.hashCode()
         return result
     }
+
+    fun getPrimaryEmailAddress(): String {
+        return details.emailDetails.firstOrNull { it.address.isNotEmpty() }?.address ?: ""
+    }
+
+    fun getPrimaryPhone(): String {
+        return details.phoneDetails.firstOrNull { it.phone_number.isNotEmpty() }?.phone_number ?: ""
+    }
 }
 
 data class PersonDetails(

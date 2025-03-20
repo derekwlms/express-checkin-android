@@ -43,4 +43,17 @@ interface BreezeChmsApiService {
         @Query("person_id") personId: String,
         @Query("fields_json") fields: String
     ): Response<JsonObject>
+
+    @Headers("Api-Key: ${ApiKeys.BREEZE_API_KEY}")
+    @GET("families/create")
+    suspend fun createFamily(
+        @Query("people_ids_json") peopleIdsArray: String
+    ): Response<JsonObject>
+
+    @Headers("Api-Key: ${ApiKeys.BREEZE_API_KEY}")
+    @GET("families/add")
+    suspend fun addToFamily(
+        @Query("people_ids_json") peopleIdsArray: String,
+        @Query("target_person_id") parentId: String
+    ): Response<JsonObject>
 }
