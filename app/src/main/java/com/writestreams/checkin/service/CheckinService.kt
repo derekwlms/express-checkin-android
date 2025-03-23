@@ -93,7 +93,7 @@ class CheckinService(private val context: Context) {
                     it.checkinCounter = (++checkinCounter).toString()
                     printGuestChildLabel(it, parentPersons, formattedDateTime)
                     addNewChildToBreeze(it, parentPersons.first()!!)
-                    emailGuestInfo(guest)
+                    emailGuestInfo(guest, parentPersons.firstOrNull())
                 }
             }
             printParentLabel(parentPersons, checkinCode, formattedDateTime)
@@ -191,12 +191,16 @@ class CheckinService(private val context: Context) {
         return sharedPreferences.getString("breeze_instance_id", "210398284") ?: "210398284"
     }
 
-    private fun emailGuestInfo(guest: Guest) {
+    private fun emailGuestInfo(guest: Guest, parent: Person? = null) {
+        // TODO Improve this: HTML email, better new child information
         val parentName = guest.fullName()
         val date = DateTimeFormatter.ofPattern("MMM d, yyyy").format(LocalDateTime.now())
         var body = "$parentName - ${guest.phoneNumber} - ${guest.emailAddress} ${guest.dateOfBirth}\n\nChildren:\n\n"
+        if (parent != null) {
+            body += "Existing parent: ${parent.fullName()} - ${parent.getPrimaryEmailAddress()} - ${parent.getPrimaryPhone()}\n\n"
+        }
         for (child in guest.children) {
-            body += "${child.fullName()} - ${child.dateOfBirth} - ${child.specialNeeds}\n"
+            body += "\t${child.fullName()} - ${child.dateOfBirth} - ${child.specialNeeds}\n"
         }
         val credentials = Base64.getEncoder().encodeToString(ApiKeys.MAILGUN_API_KEY.toByteArray())
         val authorization = "Basic $credentials"
@@ -231,7 +235,7 @@ class CheckinService(private val context: Context) {
         var familyMemberIds = emptyList<String>()
         try {
             val fieldsList = listOf(
-                mapOf("field_id" to "300984657", "field_type" to "birthdate", "response" to guest.dateOfBirth),
+                mapOf("field_id" to "300984657", "field_type" to "birthdate", "response" to guest.dateOfBirthMDY()),
                 mapOf("field_id" to "194881525", "field_type" to "phone", "response" to true, "details" to mapOf("phone_mobile" to guest.phoneNumber)),
                 mapOf("field_id" to "951543614", "field_type" to "email", "response" to true, "details" to mapOf("address" to guest.emailAddress))
             )
@@ -248,7 +252,7 @@ class CheckinService(private val context: Context) {
         for (guestChild in guest.children) {
             Log.d("addGuestToBreeze - add child:", guestChild.toString())
             val fieldsList = listOf(
-                mapOf("field_id" to "300984657", "field_type" to "birthdate", "response" to guestChild.dateOfBirth),
+                mapOf("field_id" to "300984657", "field_type" to "birthdate", "response" to guestChild.dateOfBirthMDY()),
                 mapOf("field_id" to "194881525", "field_type" to "phone", "response" to true, "details" to mapOf("phone_mobile" to guest.phoneNumber)),
                 mapOf("field_id" to "951543614", "field_type" to "email", "response" to true, "details" to mapOf("address" to guest.emailAddress))
             )
@@ -278,7 +282,7 @@ class CheckinService(private val context: Context) {
 
     private suspend fun addNewChildToBreeze(guest: Guest, parent: Person) {
         val fieldsList = listOf(
-            mapOf("field_id" to "300984657", "field_type" to "birthdate", "response" to guest.dateOfBirth),
+            mapOf("field_id" to "300984657", "field_type" to "birthdate", "response" to guest.dateOfBirthMDY()),
             mapOf("field_id" to "194881525", "field_type" to "phone", "response" to true, "details" to mapOf("phone_mobile" to parent.getPrimaryPhone())),
             mapOf("field_id" to "951543614", "field_type" to "email", "response" to true, "details" to mapOf("address" to parent.getPrimaryEmailAddress()))
         )

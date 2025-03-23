@@ -1,6 +1,7 @@
 package com.writestreams.checkin.data.local
 
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 data class Guest(
     val firstName: String,
@@ -15,5 +16,8 @@ data class Guest(
 ) {
     fun fullName(): String {
         return "$firstName $lastName"
+    }
+    fun dateOfBirthMDY(): String {
+        return dateOfBirth?.format(DateTimeFormatter.ofPattern("M/d/yyyy")) ?: ""
     }
 }

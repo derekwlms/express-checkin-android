@@ -45,12 +45,16 @@ data class Person(
         return result
     }
 
+    fun fullName(): String {
+        return "$first_name $last_name"
+    }
+
     fun getPrimaryEmailAddress(): String {
-        return details.emailDetails.firstOrNull { it.address.isNotEmpty() }?.address ?: ""
+        return details.emailDetails?.firstOrNull { it.address.isNotEmpty() }?.address ?: ""
     }
 
     fun getPrimaryPhone(): String {
-        return details.phoneDetails.firstOrNull { it.phone_number.isNotEmpty() }?.phone_number ?: ""
+        return details.phoneDetails?.firstOrNull { it.phone_number.isNotEmpty() }?.phone_number ?: ""
     }
 }
 
