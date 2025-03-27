@@ -285,12 +285,12 @@
 			"response": []
 		},
 		{
-			"name": "people - update person - family role x",
+			"name": "people - update person - birthdate",
 			"request": {
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/people/update?person_id=51854131&fields_json=[{\"field_id\":\"62348923451\",\"field_type\":\"family_role \",\"response\":\"undefined\",\"details\":{\"person_id\":51854131,\"role_id\":2}}]",
+					"raw": "{{url}}/api/people/update?person_id=51929004&fields_json=[{\"field_id\":\"300984657\",\"field_type\":\"birthdate\",\"response\":\"8/10/2023\"}]",
 					"host": [
 						"{{url}}"
 					],
@@ -302,11 +302,69 @@
 					"query": [
 						{
 							"key": "person_id",
-							"value": "51854131"
+							"value": "51929004"
 						},
 						{
 							"key": "fields_json",
-							"value": "[{\"field_id\":\"62348923451\",\"field_type\":\"family_role \",\"response\":\"undefined\",\"details\":{\"person_id\":51854131,\"role_id\":2}}]"
+							"value": "[{\"field_id\":\"300984657\",\"field_type\":\"birthdate\",\"response\":\"8/10/2023\"}]"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "people - update person - family role - head of household",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/people/update?person_id=51935724&fields_json=[{\"field_id\":\"62348923451\",\"field_type\":\"family_role\",\"response\":4,\"details\":{\"person_id\":51935724,\"role_id\":4}}]",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"people",
+						"update"
+					],
+					"query": [
+						{
+							"key": "person_id",
+							"value": "51935724"
+						},
+						{
+							"key": "fields_json",
+							"value": "[{\"field_id\":\"62348923451\",\"field_type\":\"family_role\",\"response\":4,\"details\":{\"person_id\":51935724,\"role_id\":4}}]"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "people - update person - family role - child",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/people/update?person_id=51935725&fields_json=[{\"field_id\":\"62348923451\",\"field_type\":\"family_role\",\"response\":2,\"details\":{\"person_id\":51935725,\"role_id\":2}}]",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"people",
+						"update"
+					],
+					"query": [
+						{
+							"key": "person_id",
+							"value": "51935725"
+						},
+						{
+							"key": "fields_json",
+							"value": "[{\"field_id\":\"62348923451\",\"field_type\":\"family_role\",\"response\":2,\"details\":{\"person_id\":51935725,\"role_id\":2}}]"
 						}
 					]
 				}
@@ -371,7 +429,7 @@
 					},
 					{
 						"key": "authorization",
-						"value": "Bearer eyJ0..."
+						"value": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS5icmVlemVjaG1zLmNvbS9hcGkvdjIvYXV0aC9sb2dpbiIsImlhdCI6MTczMTgxNTUwMywiZXhwIjoxNzMxODE5MTAzLCJuYmYiOjE3MzE4MTU1MDMsImp0aSI6ImJvaVBPQ1cxOE44UG1HUFEiLCJzdWIiOiIzMjE3MjAiLCJwcnYiOiI0YWMwNWMwZjhhYzA4ZjM2NGNiNGQwM2ZiOGUxZjYzMWZlYzMyMmU4In0.gyZtNMzkq4VYUvtCZ6Phl94_N0_r2iSdXnJ4ay8bf84"
 					},
 					{
 						"key": "origin",

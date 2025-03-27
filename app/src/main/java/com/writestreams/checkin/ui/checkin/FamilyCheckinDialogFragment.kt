@@ -51,9 +51,16 @@ class FamilyCheckinDialogFragment(private val person: Person) : DialogFragment()
         }
 
         binding.doneButton.setOnClickListener {
-            val checkedFamilyMembers = adapter.getCheckedFamilyMembers()
-            checkinService.checkinFamily(familyMembers, checkedFamilyMembers, getNewChildren())
-            dismiss()
+            val invalidFields = getInvalidFieldsForNewChild()
+            if (invalidFields.isNotEmpty()) {
+                Toast.makeText(requireContext(),
+                    "The following fields are required for new children: ${invalidFields.joinToString(", ")}",
+                    Toast.LENGTH_SHORT).show()
+            } else {
+                val checkedFamilyMembers = adapter.getCheckedFamilyMembers()
+                checkinService.checkinFamily(familyMembers, checkedFamilyMembers, getNewChildren())
+                dismiss()
+            }
         }
 
         binding.addChildButton.setOnClickListener {
@@ -101,6 +108,23 @@ class FamilyCheckinDialogFragment(private val person: Person) : DialogFragment()
             }
         }
         return children
+    }
+
+    private fun getInvalidFieldsForNewChild(): List<String> {
+        val invalidFields = mutableListOf<String>()
+        for (i in 0 until binding.childNamesContainer.childCount) {
+            val childViewBinding = ItemChildBinding.bind(binding.childNamesContainer.getChildAt(i))
+            if (childViewBinding.childFirstNameEditText.text.isNullOrEmpty()) {
+                invalidFields.add("Child First Name")
+            }
+            if (childViewBinding.childLastNameEditText.text.isNullOrEmpty()) {
+                invalidFields.add("Child Last Name")
+            }
+            if (childViewBinding.childDobEditText.text.isNullOrEmpty()) {
+                invalidFields.add("Child Date of Birth")
+            }
+        }
+        return invalidFields
     }
 
     override fun onStart() {
