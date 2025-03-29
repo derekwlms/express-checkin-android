@@ -41,7 +41,8 @@ class SettingsFragment : Fragment() {
         private val deviceAddresses = mapOf(
             "Printer A" to "66:32:F6:7A:4D:65",   // 117
             "Printer B" to "66:32:D7:D6:ED:10",
-            "Printer C" to "66:32:27:5A:91:A4"    // 514
+            "Printer C" to "66:32:27:5A:91:A4",   // 514
+            "Printer D" to "66:32:AF:39:15:16"    // 078
         )
     }
 
@@ -222,11 +223,18 @@ class SettingsFragment : Fragment() {
                 Label(labelStrings[0] ?: "", labelStrings[1] ?: "")
             }
             bluetoothPrintService.printLabel(label)
+            // For development - to add a new printer:
+            // 1. Uncomment bluetoothPrintService.logPairedDevices() below
+            // 2. Pair with the new printer via Android Bluetooth Settings (pin is usually 1234)
+            // 3. Run the app and do Settings - Test Print
+            // 4. Search logcat for "Paired device:" to get the Mac address
+            // 5. Add to the list in SettingsFragment (deviceAddresses) and strings.xml (device_addresses)
+            // I'll improve this later (after I drop support for old Android versions)
             // bluetoothPrintService.logPairedDevices()  // determine deviceAddress (MAC address)
-            // Paired device: BlueTooth Printer - 66:32:F6:7A:4D:65 - new - A
-            // Paired device: BlueTooth Printer - 66:32:D7:D6:ED:10 - sgc - B
-            // Paired device: BlueTooth Printer - 66:32:27:5A:91:A4 - newest - C
-
+            // Paired device: BlueTooth Printer - 66:32:F6:7A:4D:65 - A - 117
+            // Paired device: BlueTooth Printer - 66:32:D7:D6:ED:10 - B
+            // Paired device: BlueTooth Printer - 66:32:27:5A:91:A4 - C - 514
+            // Paired device: BlueTooth Printer - 66:32:AF:39:15:16 - D - 078
         }
     }
 
