@@ -236,12 +236,8 @@ class CheckinService(private val context: Context) {
         var familyMemberIds = emptyList<String>()
         var parentBreezeId: String? = ""
         try {
-            val fieldsList = listOf(
-                mapOf("field_id" to "300984657", "field_type" to "birthdate", "response" to guest.dateOfBirthMDY()),
-                mapOf("field_id" to "194881525", "field_type" to "phone", "response" to true, "details" to mapOf("phone_mobile" to guest.phoneNumber)),
-                mapOf("field_id" to "951543614", "field_type" to "email", "response" to true, "details" to mapOf("address" to guest.emailAddress))
-            )
             Log.d("addGuestToBreeze - add new parent:", guest.toString())
+            val fieldsList = getBreezeFields(guest.dateOfBirthMDY(), guest.phoneNumber, guest.emailAddress)
             val responseJson = apiService.addPerson(guest.firstName, guest.lastName, Gson().toJson(fieldsList))
             Log.d("addGuestToBreeze - add new parent - apiService.addPerson response:", responseJson.toString())
             parentBreezeId = responseJson.body()?.get("id")?.asString
@@ -252,10 +248,8 @@ class CheckinService(private val context: Context) {
             Log.e("addGuestToBreeze", "Exception calling addPerson for the parent", e)
         }
         try {
-            val fieldsList = listOf(
-                mapOf("field_id" to "62348923451", "field_type" to "family_role", "response" to FAMILY_ROLE_HEAD_OF_HOUSEHOLD, "details" to mapOf("person_id" to parentBreezeId, "role_id" to FAMILY_ROLE_HEAD_OF_HOUSEHOLD))
-            )
-            apiService.updatePerson(parentBreezeId!!, Gson().toJson(fieldsList))
+            val fieldsList = getBreezeFamilyRoleFields(parentBreezeId!!, FAMILY_ROLE_HEAD_OF_HOUSEHOLD)
+            apiService.updatePerson(parentBreezeId, Gson().toJson(fieldsList))
         } catch (e: Exception) {
             Log.e("addGuestToBreeze", "Exception calling updatePerson for the parent - family_role", e)
         }
@@ -263,11 +257,7 @@ class CheckinService(private val context: Context) {
             Log.d("addGuestToBreeze - add child:", guestChild.toString())
             var breezeId: String? = null
             try {
-                val fieldsList = listOf(
-                    mapOf("field_id" to "300984657", "field_type" to "birthdate", "response" to guestChild.dateOfBirthMDY()),
-                    mapOf("field_id" to "194881525", "field_type" to "phone", "response" to true, "details" to mapOf("phone_mobile" to guest.phoneNumber)),
-                    mapOf("field_id" to "951543614", "field_type" to "email", "response" to true, "details" to mapOf("address" to guest.emailAddress))
-                )
+                val fieldsList = getBreezeFields(guestChild.dateOfBirthMDY(), guest.phoneNumber, guest.emailAddress)
                 val responseJson = apiService.addPerson(guestChild.firstName, guestChild.lastName, Gson().toJson(fieldsList))
                 Log.d("addGuestToBreeze - guestChild - apiService.addPerson response:", responseJson.toString())
                 breezeId = responseJson.body()?.get("id")?.asString
@@ -279,10 +269,8 @@ class CheckinService(private val context: Context) {
                     "Exception calling add person for ${guestChild.firstName} ${guestChild.lastName}", e)
             }
             try {
-                val fieldsList = listOf(
-                    mapOf("field_id" to "62348923451", "field_type" to "family_role", "response" to FAMILY_ROLE_CHILD, "details" to mapOf("person_id" to breezeId, "role_id" to FAMILY_ROLE_CHILD))
-                )
-                apiService.updatePerson(breezeId!!, Gson().toJson(fieldsList))
+                val fieldsList = getBreezeFamilyRoleFields(breezeId!!, FAMILY_ROLE_CHILD)
+                apiService.updatePerson(breezeId, Gson().toJson(fieldsList))
             } catch (e: Exception) {
                 Log.e("addGuestToBreeze", "Exception calling updatePerson for the child ($breezeId) - family_role", e)
             }
@@ -298,9 +286,7 @@ class CheckinService(private val context: Context) {
         }
         for ((index, familyMemberId) in familyMemberIds.withIndex()) {
             val familyRole = if (index == 0) FAMILY_ROLE_HEAD_OF_HOUSEHOLD else FAMILY_ROLE_CHILD
-            val fieldsList = listOf(
-                mapOf("field_id" to "62348923451", "field_type" to "family_role", "response" to familyRole, "details" to mapOf("person_id" to familyMemberId, "role_id" to familyRole))
-            )
+            val fieldsList = getBreezeFamilyRoleFields(familyMemberId, familyRole)
             try {
                 apiService.updatePerson(familyMemberId, Gson().toJson(fieldsList))
             } catch (e: Exception) {
@@ -312,11 +298,7 @@ class CheckinService(private val context: Context) {
     private suspend fun addNewChildToBreeze(guest: Guest, parent: Person) {
         var breezeId: String? = null
         try {
-            val fieldsList = listOf(
-                mapOf("field_id" to "300984657", "field_type" to "birthdate", "response" to guest.dateOfBirthMDY()),
-                mapOf("field_id" to "194881525", "field_type" to "phone", "response" to true, "details" to mapOf("phone_mobile" to parent.getPrimaryPhone())),
-                mapOf("field_id" to "951543614", "field_type" to "email", "response" to true, "details" to mapOf("address" to parent.getPrimaryEmailAddress()))
-            )
+            val fieldsList = getBreezeFields(guest.dateOfBirthMDY(), parent.getPrimaryPhone(), parent.getPrimaryEmailAddress())
             val responseJson = apiService.addPerson(guest.firstName, guest.lastName, Gson().toJson(fieldsList))
             Log.d("addNewChildToBreeze - apiService.addPerson response:", responseJson.toString())
             breezeId = responseJson.body()?.get("id")?.asString
@@ -332,14 +314,26 @@ class CheckinService(private val context: Context) {
                     "Exception calling breeze to add $breezeId to family of ${parent.id}", e)
             }
             try {
-                val fieldsList = listOf(
-                    mapOf("field_id" to "62348923451", "field_type" to "family_role", "response" to FAMILY_ROLE_CHILD, "details" to mapOf("person_id" to breezeId, "role_id" to FAMILY_ROLE_CHILD))
-                )
+                val fieldsList = getBreezeFamilyRoleFields(breezeId, FAMILY_ROLE_CHILD)
                 apiService.updatePerson(breezeId, Gson().toJson(fieldsList))
             } catch (e: Exception) {
                 Log.e("addNewChildToBreeze", "Exception calling updatePerson for the child ($breezeId) - family_role", e)
             }
             checkInWithBreeze(breezeId, LocalDateTime.now(), getBreezeInstanceId())
         }
+    }
+
+    private fun getBreezeFields(birthDate: String, phoneNumber: String, emailAddress: String): List<Map<String, Any>> {
+        return listOf(
+            mapOf("field_id" to "300984657", "field_type" to "birthdate", "response" to birthDate),
+            mapOf("field_id" to "194881525", "field_type" to "phone", "response" to true, "details" to mapOf("phone_mobile" to phoneNumber)),
+            mapOf("field_id" to "951543614", "field_type" to "email", "response" to true, "details" to mapOf("address" to emailAddress))
+        )
+    }
+
+    private fun getBreezeFamilyRoleFields(breezeId: String, familyRole: String): List<Map<String, Any>> {
+        return listOf(
+            mapOf("field_id" to "62348923451", "field_type" to "family_role", "response" to familyRole, "details" to mapOf("person_id" to breezeId, "role_id" to familyRole))
+        )
     }
 }
