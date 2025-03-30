@@ -1,7 +1,6 @@
 ## To do
 
 - Check-in - guest, new child
-  - HTML emails, include IDs
   - Make it easier to type, drop down date, formatters
   - Add guests and new child to attendance list / database
 - Check-in lists

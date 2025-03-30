@@ -47,10 +47,10 @@ class AttendanceService(private val context: Context) {
 
     fun emailAttendanceList(attendanceList: List<String>, recipient: String) {
         val date = DateTimeFormatter.ofPattern("MMM d, yyyy").format(LocalDateTime.now())
-        val combinedList = attendanceList.joinToString(separator = "\n")
+        val combinedList = attendanceList.sorted().joinToString(separator = "\n")
+        val htmlContent = attendanceList.sorted().joinToString(separator = "<br />")
         val credentials = Base64.getEncoder().encodeToString(ApiKeys.MAILGUN_API_KEY.toByteArray())
         val authorization = "Basic $credentials"
-        val htmlContent = combinedList
 
         CoroutineScope(Dispatchers.IO).launch {
             try {

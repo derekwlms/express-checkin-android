@@ -193,16 +193,7 @@ class CheckinService(private val context: Context) {
     }
 
     private fun emailGuestInfo(guest: Guest, parent: Person? = null) {
-        // TODO Improve this: HTML email, better new child information
-        val parentName = guest.fullName()
         val date = DateTimeFormatter.ofPattern("MMM d, yyyy").format(LocalDateTime.now())
-        var body = "$parentName - ${guest.phoneNumber} - ${guest.emailAddress} ${guest.dateOfBirth}\n\nChildren:\n\n"
-        if (parent != null) {
-            body += "Existing parent: ${parent.fullName()} - ${parent.getPrimaryEmailAddress()} - ${parent.getPrimaryPhone()}\n\n"
-        }
-        for (child in guest.children) {
-            body += "\t${child.fullName()} - ${child.dateOfBirth} - ${child.specialNeeds}\n"
-        }
         val credentials = Base64.getEncoder().encodeToString(ApiKeys.MAILGUN_API_KEY.toByteArray())
         val authorization = "Basic $credentials"
 
@@ -212,9 +203,9 @@ class CheckinService(private val context: Context) {
                     authorization,
                     "Express Check-in <cmcheckin@sgcatlanta.org>",
                     ApiKeys.EMAIL_RECIPIENTS,
-                    "SGC Children's Ministry - Guest - $parentName - $date",
-                    body,
-                    body.replace("\n", "<br />")
+                    "SGC Children's Ministry - Added - ${guest.fullName()} - $date",
+                    getNewGuestEmailBody(guest, parent),
+                    getNewGuestEmailHtml(guest, parent)
                 ).execute()
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful) {
@@ -335,5 +326,49 @@ class CheckinService(private val context: Context) {
         return listOf(
             mapOf("field_id" to "62348923451", "field_type" to "family_role", "response" to familyRole, "details" to mapOf("person_id" to breezeId, "role_id" to familyRole))
         )
+    }
+
+    private fun getNewGuestEmailBody(guest: Guest, existingParent: Person?): String {
+        var body = "${guest.fullName()} - ${guest.phoneNumber} - ${guest.emailAddress} ${guest.dateOfBirth}\n\n"
+        if (existingParent != null) {
+            body += "Existing parent: ${existingParent.fullName()} - ${existingParent.getPrimaryEmailAddress()} - ${existingParent.getPrimaryPhone()}\n\n"
+        } else {
+            body += "Children:\n\n"
+            for (child in guest.children) {
+                body += "\t${child.fullName()} - ${child.dateOfBirth} - ${child.specialNeeds}\n"
+            }
+        }
+        return body
+    }
+
+    private fun getNewGuestEmailHtml(guest: Guest, existingParent: Person?): String {
+        var html = """
+            <h3>${if (existingParent == null) "New Family" else "New Child of Existing Family"}</h3>
+            Name: &nbsp; ${guest.fullName()} <br/>
+            Phone: &nbsp; ${guest.phoneNumber} <br/>
+            Birth date: &nbsp; ${guest.dateOfBirth} <br/>
+            Email: &nbsp; ${guest.emailAddress} <br/>
+            Check-in: &nbsp; ${guest.checkinDateTime} <br/>
+    """
+        if (existingParent != null) {
+            html += """
+                <h3>Existing Parent:</h3>
+                    Name: &nbsp; ${existingParent.fullName()} <br/>
+                    Phone: &nbsp; ${existingParent.getPrimaryPhone()} <br/>
+                    Email: &nbsp; ${existingParent.getPrimaryEmailAddress()} <br/>
+            """
+        } else {
+            html += "<h3>Children:</h3><ul>"
+            for (child in guest.children) {
+                html += """
+                    <li>Name: &nbsp; ${child.fullName()}  &emsp;
+                        Birthdate: &nbsp; ${child.dateOfBirth} &emsp;
+                        Special Needs: &nbsp; ${child.specialNeeds}
+                    </li>
+                """
+            }
+            html += "</ul>"
+        }
+        return html
     }
 }

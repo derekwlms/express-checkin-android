@@ -49,6 +49,10 @@ data class Person(
         return "$first_name $last_name"
     }
 
+    fun nameLastFirst(): String {
+        return "$last_name, $first_name"
+    }
+
     fun getPrimaryEmailAddress(): String {
         return details.emailDetails?.firstOrNull { it.address.isNotEmpty() }?.address ?: ""
     }

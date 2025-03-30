@@ -72,7 +72,7 @@ class AttendanceFragment : Fragment() {
         }
 
         binding.emailButton.setOnClickListener {
-            val attendanceList = personsList.map { "${it.first_name} ${it.last_name} - ${it.id}" }
+            val attendanceList = personsList.map { "${it.nameLastFirst()} - ${it.id}" }
             val recipient = ApiKeys.EMAIL_RECIPIENTS
             attendanceService.emailAttendanceList(attendanceList, recipient)
         }
