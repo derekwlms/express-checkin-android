@@ -1,4 +1,3 @@
-// GuestCheckinDialogFragment.kt
 package com.writestreams.checkin.ui.checkin
 
 import android.app.DatePickerDialog

@@ -13,15 +13,23 @@
             android:id="@+id/guestCheckinHeaderTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Guest Check-in"
+            android:text="Add Family"
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_gravity="center_horizontal" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Adult:"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             app:cardElevation="4dp">
 
             <LinearLayout
@@ -33,7 +41,7 @@
                     android:id="@+id/firstNameEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="First Name"
+                    android:hint="Adult First Name"
                     android:minHeight="48dp"
                     android:inputType="textPersonName|textCapWords"
                     android:importantForAccessibility="yes" />
@@ -42,7 +50,7 @@
                     android:id="@+id/lastNameEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Last Name"
+                    android:hint="Adult Last Name"
                     android:minHeight="48dp"
                     android:inputType="textPersonName|textCapWords"
                     android:importantForAccessibility="yes" />
@@ -100,7 +108,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Children"
+                    android:text="Children:"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="8dp" />
