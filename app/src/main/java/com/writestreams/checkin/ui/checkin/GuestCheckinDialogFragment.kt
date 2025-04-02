@@ -14,6 +14,7 @@ import com.writestreams.checkin.data.local.GuestChild
 import com.writestreams.checkin.databinding.DialogGuestCheckinBinding
 import com.writestreams.checkin.databinding.ItemChildBinding
 import com.writestreams.checkin.service.CheckinService
+import com.writestreams.checkin.util.Utils
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
@@ -52,6 +53,22 @@ class GuestCheckinDialogFragment : DialogFragment() {
             override fun afterTextChanged(s: Editable?) {}
         }
         requiredFields.forEach { it.addTextChangedListener(textWatcher) }
+
+        binding.phoneNumberEditText.addTextChangedListener(object : TextWatcher {
+            private var isFormatting: Boolean = false
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                if (isFormatting) return
+                isFormatting = true
+                val formatted = Utils.formatPhoneNumber(s.toString())
+                s?.replace(0, s.length, formatted, 0, formatted.length)
+                isFormatting = false
+            }
+        })
 
         binding.dateOfBirthEditText.setOnClickListener {
             val calendar = Calendar.getInstance()
