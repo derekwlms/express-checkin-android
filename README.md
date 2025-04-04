@@ -1,6 +1,6 @@
 # Express Check-in
 
-![SGC Logo](assets/sgc-logo-white.svg)
+![SGC Logo](assets/sgc-logo-blue-white-bg.svg)
 
 Event check-in for use with Breeze CHMS.
 
@@ -19,7 +19,7 @@ Express Check-in uses the following:
 - The Breeze CHMS API
   - The [original Breeze REST APIs](https://app.breezechms.com/api).
   - Other APIs ([Tithely](https://tithe.ly/api)) and subsequent [merged](https://app.swaggerhub.com/apis/Tithe.ly/Breeze/2023-06-09) [versions](/docs/breeze-apis/) do not include check-in.
-  - See the Postman collections under [docs/breeze-apis](/docs/breeze-apis/). 
+  - See the Postman collections under [docs/breeze-apis](/docs/breeze-apis/).
   - API keys are redacted in the exported Postman collections (replaced by `...`).
 - [TSPL (Taiwan Semiconductor Printer Language)](https://scancode.ru/upload/iblock/937/GP_1125T-Gprinter-Barcode-Printer-TSPL-Programming-Manual.pdf) [-](https://hackernoon.com/how-to-print-labels-with-tspl-and-javascript) See also [this](https://www.icintracom.biz/redazione/libretti/libretto7028-04-1.pdf) and the PDFs under [docs/printer-tspl](/docs/printer-tspl/)
 
