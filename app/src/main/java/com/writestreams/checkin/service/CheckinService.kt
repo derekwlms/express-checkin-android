@@ -95,6 +95,7 @@ class CheckinService(private val context: Context) {
                     printGuestChildLabel(it, parentPersons, formattedDateTime)
                     addNewChildToBreeze(it, parentPersons.first()!!)
                     emailGuestInfo(guest, parentPersons.firstOrNull())
+                    addNewChildToRepository(it, parentPersons.firstOrNull())
                 }
             }
             printParentLabel(parentPersons, checkinCode, formattedDateTime)
@@ -120,6 +121,7 @@ class CheckinService(private val context: Context) {
             printGuestLabels(guest)
             emailGuestInfo(guest)
             addGuestToBreeze(guest)
+            addGuestToRepository(guest)
         }
     }
 
@@ -234,6 +236,7 @@ class CheckinService(private val context: Context) {
             parentBreezeId = responseJson.body()?.get("id")?.asString
             if (!parentBreezeId.isNullOrEmpty()) {
                 familyMemberIds = familyMemberIds + parentBreezeId
+                guest.breezeId = parentBreezeId
             }
         } catch (e: Exception) {
             Log.e("addGuestToBreeze", "Exception calling addPerson for the parent", e)
@@ -254,6 +257,7 @@ class CheckinService(private val context: Context) {
                 breezeId = responseJson.body()?.get("id")?.asString
                 if (!breezeId.isNullOrEmpty()) {
                     familyMemberIds = familyMemberIds + breezeId
+                    guestChild.breezeId = breezeId
                 }
             } catch (e: Exception) {
                 Log.e("addGuestToBreeze - guestChild - apiService.addPerson",
@@ -298,6 +302,7 @@ class CheckinService(private val context: Context) {
                 "Exception calling add person for ${guest.firstName} ${guest.lastName}", e)
         }
         if (breezeId != null) {
+            guest.breezeId = breezeId
             try {
                 apiService.addToFamily(Gson().toJson(listOf(breezeId)), parent.id)
             } catch (e: Exception) {
@@ -311,6 +316,44 @@ class CheckinService(private val context: Context) {
                 Log.e("addNewChildToBreeze", "Exception calling updatePerson for the child ($breezeId) - family_role", e)
             }
             checkInWithBreeze(breezeId, LocalDateTime.now(), getBreezeInstanceId())
+        }
+    }
+
+    private fun addGuestToRepository(guest: Guest) {
+        if (guest.breezeId.isNullOrEmpty()) {
+            Log.d("addGuestToRepository",
+                "Breeze ID not set, so not adding guest to local repository: guest: $guest")
+            return
+        }
+        try {
+            val person = guest.asPerson()
+            Log.d("addGuestToRepository", "Adding to local repository: guest: $guest, person: $person")
+            for (child in guest.children) {
+                Log.d("addGuestToRepository", "Adding to local repository: guest: $guest, person: $person")
+                // TODO Add the child also? Or will the FamilyMember cover it?
+            }
+            // TODO Enable this when ready
+            // repository.addPerson(person)
+        } catch (e: Exception) {
+            Log.e("addGuestToRepository - repository.addPerson",
+                "Exception adding guest to repository - ${guest.firstName} ${guest.lastName}", e)
+        }
+    }
+
+    private fun addNewChildToRepository(newChild: Guest, parent: Person?) {
+        if (newChild.breezeId.isNullOrEmpty()) {
+            Log.d("addNewChildToRepository",
+                "Breeze ID not set, so not adding new child to local repository: guest: $newChild, parent: $parent")
+            return
+        }
+        try {
+            val person = newChild.asPerson()
+            Log.d("addNewChildToRepository", "Adding to local repository: guestChild: $newChild, person: $person, parent: $parent")
+            // TODO Enable this when ready
+            // repository.addPerson(person)
+        } catch (e: Exception) {
+            Log.e("addGuestToRepository - repository.addPerson",
+                "Exception adding new child to repository - ${newChild.firstName} ${newChild.lastName}", e)
         }
     }
 

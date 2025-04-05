@@ -66,6 +66,10 @@ class AttendanceFragment : Fragment() {
             }
         })
 
+        binding.syncButton.setOnClickListener {
+            confirmThenSyncWithBreeze()
+        }
+
         binding.printButton.setOnClickListener {
             val attendanceList = personsList.map { "${it.first_name} ${it.last_name}" }
             attendanceService.printAttendanceList(attendanceList)
@@ -94,6 +98,18 @@ class AttendanceFragment : Fragment() {
             .setMessage("Are you sure you want to check out ${person.first_name} ${person.last_name}?")
             .setPositiveButton("Yes") { _, _ ->
                 checkOutPerson(person)
+            }
+            .setNegativeButton("No", null)
+            .show()
+    }
+
+    private fun confirmThenSyncWithBreeze() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Sync with Breeze")
+            .setMessage("Do you want to send local data to breeze - NOT FINISHED YET?")
+            .setPositiveButton("Yes") { _, _ ->
+                // TODO FINISH
+//                attendanceService.sendLocalDataToBreeze()
             }
             .setNegativeButton("No", null)
             .show()

@@ -109,4 +109,10 @@ class Repository(context: Context) {
             personDao.update(person)
         }
     }
+
+    suspend fun addPerson(person: Person) {
+        withContext(Dispatchers.IO) {
+            personDao.add(person)
+        }
+    }
 }

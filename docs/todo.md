@@ -10,7 +10,7 @@
   - Auto-email lists?
 - Settings
   - Send cached check-ins and adds after offline (SAF)
+  - Offline testing
 - Misc
-  - White background squircle of logo image (python)
   - Remote logs/monitoring. Crashlytics?
   - Switch to Material for views, validation, etc?

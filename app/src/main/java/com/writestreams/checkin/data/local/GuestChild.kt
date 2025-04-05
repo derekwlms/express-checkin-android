@@ -7,7 +7,8 @@ data class GuestChild(
     val firstName: String,
     val lastName: String,
     var dateOfBirth: LocalDate?,
-    var specialNeeds: String = ""
+    var specialNeeds: String = "",
+    var breezeId: String = ""
 ) {
     fun fullName(): String {
         return "$firstName $lastName"
@@ -23,6 +24,7 @@ data class GuestChild(
             dateOfBirth = this.dateOfBirth,
             phoneNumber = "",
             emailAddress = "",
+            breezeId = this.breezeId,
             children = emptyList()
         )
     }

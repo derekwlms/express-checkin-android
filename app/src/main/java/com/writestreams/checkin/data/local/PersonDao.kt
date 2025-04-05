@@ -26,6 +26,9 @@ interface PersonDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertAll(persons: List<Person>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun add(person: Person)
+
     @Update
     fun update(person: Person)
 }
