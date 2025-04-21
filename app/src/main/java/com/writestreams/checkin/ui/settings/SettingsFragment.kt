@@ -42,7 +42,8 @@ class SettingsFragment : Fragment() {
             "Printer A" to "66:32:F6:7A:4D:65",   // 117
             "Printer B" to "66:32:D7:D6:ED:10",
             "Printer C" to "66:32:27:5A:91:A4",   // 514
-            "Printer D" to "66:32:AF:39:15:16"    // 078
+            "Printer D" to "66:32:AF:39:15:16",   // 078
+            "Printer E" to "10:23:81:47:79:F7"    // D450
         )
     }
 
@@ -235,6 +236,7 @@ class SettingsFragment : Fragment() {
             // Paired device: BlueTooth Printer - 66:32:D7:D6:ED:10 - B
             // Paired device: BlueTooth Printer - 66:32:27:5A:91:A4 - C - 514
             // Paired device: BlueTooth Printer - 66:32:AF:39:15:16 - D - 078
+            // Paired device: D450 - 10:23:81:47:79:F7 - E - D450
         }
     }
 
