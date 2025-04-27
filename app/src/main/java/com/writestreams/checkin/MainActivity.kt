@@ -11,6 +11,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.ActivityMainBinding
+import com.writestreams.checkin.util.AttendanceEmailScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,6 +40,7 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
 
         repository = Repository(applicationContext)
+        AttendanceEmailScheduler.scheduleWeeklyEmail(applicationContext)
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
