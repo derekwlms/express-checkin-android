@@ -40,6 +40,7 @@ class CheckinService(private val context: Context) {
     companion object {
         const val FAMILY_ROLE_CHILD = "2"
         const val FAMILY_ROLE_HEAD_OF_HOUSEHOLD = "4"
+        const val OFFLINE_BREEZE_ID_PREFIX = "OL_"
         var checkinCounter = 0
     }
 
@@ -342,9 +343,9 @@ class CheckinService(private val context: Context) {
 
     private fun addNewChildToRepository(newChild: Guest, parent: Person?) {
         if (newChild.breezeId.isNullOrEmpty()) {
+            newChild.breezeId = OFFLINE_BREEZE_ID_PREFIX + System.currentTimeMillis()
             Log.d("addNewChildToRepository",
-                "Breeze ID not set, so not adding new child to local repository: guest: $newChild, parent: $parent")
-            return
+                "Breeze ID not set, so assigning offline ID: ${newChild.breezeId}, guest: $newChild, parent: $parent")
         }
         try {
             val person = newChild.asPerson()
