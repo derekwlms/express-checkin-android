@@ -47,8 +47,9 @@ class AttendanceService(private val context: Context) {
 
     fun emailAttendanceList(attendanceList: List<String>, recipient: String) {
         val date = DateTimeFormatter.ofPattern("MMM d, yyyy").format(LocalDateTime.now())
-        val combinedList = attendanceList.sorted().joinToString(separator = "\n")
-        val htmlContent = attendanceList.sorted().joinToString(separator = "<br />")
+        val breezeInstanceId = getBreezeInstanceId()
+        val combinedList = " " + attendanceList.sorted().joinToString(separator = "\n")
+        val htmlContent = " " + attendanceList.sorted().joinToString(separator = "<br />")
         val credentials = Base64.getEncoder().encodeToString(ApiKeys.MAILGUN_API_KEY.toByteArray())
         val authorization = "Basic $credentials"
 
@@ -58,7 +59,7 @@ class AttendanceService(private val context: Context) {
                     authorization,
                     "Express Check-in <cmcheckin@sgcatlanta.org>",
                     recipient,
-                    "SGC Children's Ministry - Attendance List - $date",
+                    "SGC Children's Ministry - Attendance List - $date - $breezeInstanceId",
                     combinedList,
                     htmlContent
                 ).execute()
@@ -77,5 +78,10 @@ class AttendanceService(private val context: Context) {
                 Log.e("AttendanceService.emailAttendanceList exception", e.message, e)
             }
         }
+    }
+
+    private fun getBreezeInstanceId(): String {
+        val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        return sharedPreferences.getString("breeze_instance_id", "210398284") ?: "210398284"
     }
 }

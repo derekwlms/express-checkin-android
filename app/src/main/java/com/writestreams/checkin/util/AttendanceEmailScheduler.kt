@@ -13,7 +13,7 @@ object AttendanceEmailScheduler {
         val nextSunday = Calendar.getInstance().apply {
             set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
             set(Calendar.HOUR_OF_DAY, 10)
-            set(Calendar.MINUTE, 40)
+            set(Calendar.MINUTE, 25)
             set(Calendar.SECOND, 0)
             if (before(now)) {
                 add(Calendar.WEEK_OF_YEAR, 1)
