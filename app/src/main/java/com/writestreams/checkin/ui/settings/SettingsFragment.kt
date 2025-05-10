@@ -2,7 +2,6 @@ package com.writestreams.checkin.ui.settings
 
 import android.Manifest
 import android.app.AlertDialog
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -26,32 +25,20 @@ import com.writestreams.checkin.R
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.FragmentSettingsBinding
 import com.writestreams.checkin.service.BluetoothPrintService
+import com.writestreams.checkin.service.SettingsService
 import com.writestreams.checkin.util.Label
 import com.writestreams.checkin.util.ReferenceLabel
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 
 class SettingsFragment : Fragment() {
 
-    companion object {
-        val BREEZE_INSTANCE_ID_START_DATE: LocalDate = LocalDate.of(2025, 2, 2)
-        const val BREEZE_INSTANCE_ID_START = 210398276   // Groundhog Day 2025
-
-        private val deviceAddresses = mapOf(
-            "Printer A" to "66:32:F6:7A:4D:65",   // 117
-            "Printer B" to "66:32:D7:D6:ED:10",
-            "Printer C" to "66:32:27:5A:91:A4",   // 514
-            "Printer D" to "66:32:AF:39:15:16",   // 078
-            "Printer E" to "10:23:81:47:79:F7"    // D450
-        )
-    }
-
     private var _binding: FragmentSettingsBinding? = null
-    private lateinit var deviceAddressSpinner: Spinner
+    private lateinit var printerNamesSpinner: Spinner
     private lateinit var labelTextEditText: EditText
     private lateinit var printButton: Button
 
+    private lateinit var settingsService: SettingsService
     private lateinit var bluetoothPrintService: BluetoothPrintService
     private lateinit var repository: Repository
 
@@ -74,11 +61,15 @@ class SettingsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
+        settingsService = SettingsService(requireContext())
+
         val versionTextView: TextView = binding.root.findViewById(R.id.versionTextView)
         val versionNumber = BuildConfig.VERSION_NAME
         val buildDate = BuildConfig.BUILD_DATE
         versionTextView.text = "Version $versionNumber\nBuild Date: $buildDate"
-        updateBreezeInstanceId(LocalDate.now())
+
+        showBreezeInstanceId()
+
         return binding.root
     }
 
@@ -88,7 +79,7 @@ class SettingsFragment : Fragment() {
         bluetoothPrintService = BluetoothPrintService(requireContext())
         repository = Repository(requireContext())
 
-        deviceAddressSpinner = view.findViewById(R.id.deviceAddressSpinner)
+        printerNamesSpinner = view.findViewById(R.id.printerNamesSpinner)
         labelTextEditText = view.findViewById(R.id.labelTextEditText)
         printButton = view.findViewById(R.id.printButton)
 
@@ -101,7 +92,8 @@ class SettingsFragment : Fragment() {
         datePicker.init(
             datePicker.year, datePicker.month, datePicker.dayOfMonth
         ) { _, year, monthOfYear, dayOfMonth ->
-            updateBreezeInstanceId(LocalDate.of(year, monthOfYear + 1, dayOfMonth))
+            settingsService.updateBreezeInstanceId(LocalDate.of(year, monthOfYear + 1, dayOfMonth))
+            showBreezeInstanceId()
         }
 
         val resetCheckinsButton: Button = view.findViewById(R.id.resetCheckinsButton)
@@ -201,20 +193,14 @@ class SettingsFragment : Fragment() {
     // If so, see onRequestPermissionsResult in the 2/8/25 ~ 8:50 pm commit
 
     private fun connectAndPrint() {
-        val deviceId = deviceAddressSpinner.selectedItem.toString()
-        val deviceAddress = deviceAddresses[deviceId] ?: "66:32:F6:7A:4D:65"
+        val printerName = printerNamesSpinner.selectedItem.toString()
         val labelText = labelTextEditText.text.toString()
 
-        if (deviceAddress.isEmpty() || labelText.isEmpty()) {
+        if (printerName.isEmpty() || labelText.isEmpty()) {
             Toast.makeText(requireContext(), "Please select a printer and enter label text", Toast.LENGTH_SHORT).show()
             return
         }
-
-        val sharedPreferences = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        with(sharedPreferences.edit()) {
-            putString("printer_device_address", deviceAddress)
-            apply()
-        }
+        settingsService.updatePrinterDeviceAddress(printerName)
 
         val labelStrings = ("$labelText,,").split(',')
         lifecycleScope.launch {
@@ -229,7 +215,7 @@ class SettingsFragment : Fragment() {
             // 2. Pair with the new printer via Android Bluetooth Settings (pin is usually 1234)
             // 3. Run the app and do Settings - Test Print
             // 4. Search logcat for "Paired device:" to get the Mac address
-            // 5. Add to the list in SettingsFragment (deviceAddresses) and strings.xml (device_addresses)
+            // 5. Add to the list in SettingsService (deviceAddresses) and strings.xml (printer_names)
             // I'll improve this later (after I drop support for old Android versions)
             // bluetoothPrintService.logPairedDevices()  // determine deviceAddress (MAC address)
             // Paired device: BlueTooth Printer - 66:32:F6:7A:4D:65 - A - 117
@@ -240,17 +226,9 @@ class SettingsFragment : Fragment() {
         }
     }
 
-    private fun updateBreezeInstanceId(date: LocalDate) {
-        Log.d("SettingsFragment", "Checkin date: $date")
-        val sharedPreferences = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        val weeksFromStartDate = ChronoUnit.WEEKS.between(BREEZE_INSTANCE_ID_START_DATE, date).toInt()
-        val breezeInstanceId = (BREEZE_INSTANCE_ID_START + (2 * weeksFromStartDate)).toString()
+    private fun showBreezeInstanceId() {
         val breezeInstanceIdTextView: TextView = binding.root.findViewById(R.id.breezeInstanceIdTextView)
-        breezeInstanceIdTextView.text = breezeInstanceId
-        with(sharedPreferences.edit()) {
-            putString("breeze_instance_id", breezeInstanceId)
-            apply()
-        }
+        breezeInstanceIdTextView.text = settingsService.getBreezeInstanceId()
     }
 
     override fun onDestroyView() {

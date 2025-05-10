@@ -12,6 +12,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.ActivityMainBinding
 import com.writestreams.checkin.util.AttendanceEmailScheduler
+import com.writestreams.checkin.service.SettingsService
+import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,6 +43,9 @@ class MainActivity : AppCompatActivity() {
 
         repository = Repository(applicationContext)
         AttendanceEmailScheduler.scheduleWeeklyEmail(applicationContext)
+
+        val settingsService = SettingsService(applicationContext)
+        settingsService.updateBreezeInstanceId(LocalDate.now())
 
         CoroutineScope(Dispatchers.IO).launch {
             try {

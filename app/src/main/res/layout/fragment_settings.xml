@@ -31,11 +31,11 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <Spinner
-                android:id="@+id/deviceAddressSpinner"
+                android:id="@+id/printerNamesSpinner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
-                android:entries="@array/device_addresses"
+                android:entries="@array/printer_names"
                 android:textSize="24sp"
                 android:minHeight="48dp" />
 
