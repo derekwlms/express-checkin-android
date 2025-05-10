@@ -5,12 +5,10 @@
 - Check-in lists
   - Search - phone number
   - Search - first and last name
-- Attendance
-  - Show Breeze list (from API) - option to select local list or Breeze list?
-  - Auto-email lists?
 - Settings
-  - Send cached check-ins and adds after offline (SAF)
+  - Send cached check-ins and adds after offline (SAF) - show counts of check-in and adds
   - Offline testing
 - Misc
-  - Remote logs/monitoring. Crashlytics?
+  - Draw, refactor, decouple (ex, move logic from Fragments to Services, apiService and repository holders)
+  - Remote logs/monitoring. Crashlytics? PostHog? (https://posthog.com/docs/error-tracking)
   - Switch to Material for views, validation, etc?

@@ -6,6 +6,7 @@ import com.writestreams.checkin.data.local.AppDatabase
 import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.data.local.PersonDao
 import com.writestreams.checkin.data.network.BreezeChmsApiService
+import com.writestreams.checkin.util.ApiKeys.BREEZE_API_URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -32,7 +33,7 @@ class Repository(context: Context) {
 
         val retrofit = Retrofit.Builder()
             .client(client)
-            .baseUrl("https://sgcwoodstock.breezechms.com/api/")
+            .baseUrl(BREEZE_API_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 

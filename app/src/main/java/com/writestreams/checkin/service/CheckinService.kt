@@ -12,6 +12,7 @@ import com.writestreams.checkin.data.network.BreezeChmsApiService
 import com.writestreams.checkin.data.network.MailgunService
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.util.ApiKeys
+import com.writestreams.checkin.util.ApiKeys.BREEZE_API_URL
 import com.writestreams.checkin.util.ApiKeys.MAILGUN_URL
 import com.writestreams.checkin.util.ChildLabel
 import com.writestreams.checkin.util.GuestLabel
@@ -52,7 +53,7 @@ class CheckinService(private val context: Context) {
             .build()
         val retrofit = Retrofit.Builder()
             .client(client)
-            .baseUrl("https://sgcwoodstock.breezechms.com/api/")
+            .baseUrl(BREEZE_API_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         apiService = retrofit.create(BreezeChmsApiService::class.java)

@@ -1,6 +1,7 @@
 package com.writestreams.checkin.data.network
 
 import com.google.gson.JsonObject
+import com.writestreams.checkin.data.local.Attendance
 import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.util.ApiKeys
 import retrofit2.Call
@@ -28,6 +29,13 @@ interface BreezeChmsApiService {
         @Query("person_id") personId: String,
         @Query("instance_id") instanceId: String
     ): Response<Void>
+
+    @Headers("Api-Key: ${ApiKeys.BREEZE_API_KEY}")
+    @GET("events/attendance/list")
+    suspend fun getAttendance(
+        @Query("instance_id") instanceId: String,
+        @Query("details") direction: String = "true"
+    ): Response<List<Attendance>>
 
     @Headers("Api-Key: ${ApiKeys.BREEZE_API_KEY}")
     @GET("people/add")

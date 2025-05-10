@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.writestreams.checkin.data.local.AppDatabase
 import com.writestreams.checkin.data.local.PersonDao
+import com.writestreams.checkin.util.ApiKeys.BREEZE_API_URL
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.junit.After
@@ -44,7 +45,7 @@ class BreezeChmsApiServiceIntegrationTest {
             .build()
 
         val retrofit = Retrofit.Builder()
-            .baseUrl("https://sgcwoodstock.breezechms.com/api/")
+            .baseUrl(BREEZE_API_URL)
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

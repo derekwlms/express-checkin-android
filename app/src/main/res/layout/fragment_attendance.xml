@@ -5,6 +5,27 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <RadioGroup
+        android:id="@+id/sourceRadioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/localRadioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Local"
+            android:checked="true" />
+
+        <RadioButton
+            android:id="@+id/breezeRadioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Breeze" />
+    </RadioGroup>
+
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

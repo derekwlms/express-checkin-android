@@ -3,8 +3,11 @@ package com.writestreams.checkin.service
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import com.writestreams.checkin.data.local.Person
+import com.writestreams.checkin.data.network.BreezeChmsApiService
 import com.writestreams.checkin.data.network.MailgunService
 import com.writestreams.checkin.util.ApiKeys
+import com.writestreams.checkin.util.ApiKeys.BREEZE_API_URL
 import com.writestreams.checkin.util.ApiKeys.MAILGUN_URL
 import com.writestreams.checkin.util.AttendanceLabel
 import kotlinx.coroutines.CoroutineScope
@@ -20,17 +23,26 @@ import java.util.Base64
 
 class AttendanceService(private val context: Context) {
 
+    private val breezeApiService: BreezeChmsApiService
     private val bluetoothPrintService = BluetoothPrintService(context)
     private val mailgunService: MailgunService
 
     init {
-        val client = OkHttpClient.Builder().build()
-        val retrofit = Retrofit.Builder()
+        val mailClient = OkHttpClient.Builder().build()
+        val mailRetrofit = Retrofit.Builder()
             .baseUrl(MAILGUN_URL)
-            .client(client)
+            .client(mailClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-        mailgunService = retrofit.create(MailgunService::class.java)
+        mailgunService = mailRetrofit.create(MailgunService::class.java)
+
+        val breezeApiClient = OkHttpClient.Builder().build()
+        val breezeApiRetrofit = Retrofit.Builder()
+            .baseUrl(BREEZE_API_URL)
+            .client(breezeApiClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        breezeApiService = breezeApiRetrofit.create(BreezeChmsApiService::class.java)
     }
 
     fun printAttendanceList(attendanceList: List<String>) {
@@ -76,6 +88,18 @@ class AttendanceService(private val context: Context) {
                     Toast.makeText(context, "Error emailing attendance list: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
                 Log.e("AttendanceService.emailAttendanceList exception", e.message, e)
+            }
+        }
+    }
+
+    suspend fun getBreezeCheckedInPersons(): List<Person> {
+        val instanceId = getBreezeInstanceId()
+        return withContext(Dispatchers.IO) {
+            val response = breezeApiService.getAttendance(instanceId)
+            if (response.isSuccessful) {
+                response.body()?.map { it.asPerson() } ?: emptyList()
+            } else {
+                emptyList()
             }
         }
     }

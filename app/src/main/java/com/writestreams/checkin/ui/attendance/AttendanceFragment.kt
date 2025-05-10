@@ -15,6 +15,7 @@ import com.writestreams.checkin.databinding.FragmentAttendanceBinding
 import com.writestreams.checkin.service.AttendanceService
 import com.writestreams.checkin.service.CheckinService
 import com.writestreams.checkin.util.ApiKeys
+import com.writestreams.checkin.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,6 +29,7 @@ class AttendanceFragment : Fragment() {
     private lateinit var attendanceService: AttendanceService
     private lateinit var checkinService: CheckinService
     private var personsList: List<Person> = listOf()
+    private var isUsingLocalAttendeeList = true
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -50,6 +52,11 @@ class AttendanceFragment : Fragment() {
         binding.recyclerView.adapter = adapter
 
         fetchCheckedInPersons()
+
+        binding.sourceRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+            isUsingLocalAttendeeList = checkedId == R.id.localRadioButton
+            fetchCheckedInPersons()
+        }
 
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -83,13 +90,17 @@ class AttendanceFragment : Fragment() {
     }
 
     private fun fetchCheckedInPersons() {
+        var personsList = emptyList<Person>()
         lifecycleScope.launch {
-            personsList = withContext(Dispatchers.IO) {
-                repository.getCheckedInPersons()
-            }
-            adapter.updateList(personsList)
-            binding.attendeesBadge.text = personsList.size.toString()
+            personsList =
+                if (isUsingLocalAttendeeList) {
+                    repository.getCheckedInPersons()
+                } else {
+                    attendanceService.getBreezeCheckedInPersons()
+                }
         }
+        adapter.updateList(personsList)
+        binding.attendeesBadge.text = personsList.size.toString()
     }
 
     private fun showCheckOutConfirmationDialog(person: Person) {
