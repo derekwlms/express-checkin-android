@@ -90,7 +90,6 @@ class AttendanceFragment : Fragment() {
     }
 
     private fun fetchCheckedInPersons() {
-        var personsList = emptyList<Person>()
         lifecycleScope.launch {
             personsList =
                 if (isUsingLocalAttendeeList) {
@@ -98,9 +97,9 @@ class AttendanceFragment : Fragment() {
                 } else {
                     attendanceService.getBreezeCheckedInPersons()
                 }
+            adapter.updateList(personsList)
+            binding.attendeesBadge.text = personsList.size.toString()
         }
-        adapter.updateList(personsList)
-        binding.attendeesBadge.text = personsList.size.toString()
     }
 
     private fun showCheckOutConfirmationDialog(person: Person) {

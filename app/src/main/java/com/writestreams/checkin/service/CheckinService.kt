@@ -176,9 +176,14 @@ class CheckinService(private val context: Context) {
     }
 
     private suspend fun checkOutWithBreeze(person: Person, breezeInstanceId: String) {
-        Log.d("checkOutWithBreeze", "Checked out ${person.first_name} ${person.last_name}")
+        Log.d("checkOutWithBreeze", "Checking out ${person.first_name} ${person.last_name} for event $breezeInstanceId")
+        try {
 //        apiService.checkIn(person.id, breezeInstanceId, "out")
-        apiService.deleteCheckin(person.id, breezeInstanceId)
+            apiService.deleteCheckin(person.id, breezeInstanceId)
+        } catch (e: Exception) {
+            Log.e("checkOutWithBreeze",
+                "Exception calling deleteCheckin API for person id ${person.id}", e)
+        }
     }
 
     private fun getParentInfo(parentPersons: List<Person?>): Triple<String, String, String> {

@@ -105,6 +105,7 @@ class CheckinFragment : Fragment() {
         val dialogFragment = FamilyCheckinDialogFragment(person)
         dialogFragment.show(parentFragmentManager, "FamilyCheckinDialogFragment")
         searchTextEditText.text.clear()
+        adapter.submitList(emptyList())
     }
 
     private fun showGuestCheckinDialog() {
