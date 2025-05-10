@@ -22,9 +22,11 @@ data class Guest(
     fun dateOfBirthMDY(): String {
         return dateOfBirth?.format(DateTimeFormatter.ofPattern("M/d/yyyy")) ?: ""
     }
+    fun dateOfBirthYMD(): String {
+        return dateOfBirth?.format(DateTimeFormatter.ISO_LOCAL_DATE) ?: ""
+    }
 
     fun asPerson(): Person {
-        // TODO Finish this. Use dateOfBirth (field_type 300984657), children, ...
         val checkinLocalDateTime = runCatching {
             if (this.checkinDateTime.isNotEmpty())
                 LocalDateTime.parse(this.checkinDateTime, DateTimeFormatter.ofPattern("MM/dd/yyyy"))
@@ -35,12 +37,13 @@ data class Guest(
             last_name = this.lastName,
             details = PersonDetails(
                 person_id = this.breezeId,
-                phoneDetails = emptyList(),
-                // TODO: phoneDetails = listOf(PhoneDetail( ... this.phoneNumber
-                emailDetails = emptyList(),
-                // TODO: emailDetails = listOf(EmailDetail( ... this.emailAddress
+                // TODO - Enable these when ready, also in Person.kt:
+//                birthdate = this.dateOfBirthYMD(),
+//                redundantBirthDate = this.dateOfBirthYMD(),
+                phoneDetails = listOf(PhoneDetail(this.phoneNumber)),
+                emailDetails = listOf(EmailDetail(this.emailAddress))
             ),
-            family = emptyList(),
+            family = emptyList(), // this.children.map { it.asFamilyMember(this) },
             checkinDateTime = checkinLocalDateTime,
             checkinCode = this.checkinCode,
             checkinCounter = this.checkinCounter,

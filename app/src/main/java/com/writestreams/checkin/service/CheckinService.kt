@@ -322,9 +322,9 @@ class CheckinService(private val context: Context) {
 
     private fun addGuestToRepository(guest: Guest) {
         if (guest.breezeId.isNullOrEmpty()) {
+            guest.breezeId = OFFLINE_BREEZE_ID_PREFIX + System.currentTimeMillis()
             Log.d("addGuestToRepository",
-                "Breeze ID not set, so not adding guest to local repository: guest: $guest")
-            return
+                "Breeze ID not set, so assigning offline ID for guest: ${guest.breezeId}, guest: $guest")
         }
         try {
             val person = guest.asPerson()

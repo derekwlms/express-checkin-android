@@ -65,7 +65,9 @@ data class Person(
 data class PersonDetails(
     val person_id: String,
     @SerializedName("194881525") val phoneDetails: List<PhoneDetail>,
-    @SerializedName("951543614") val emailDetails: List<EmailDetail>
+    @SerializedName("951543614") val emailDetails: List<EmailDetail>,
+//    @SerializedName("300984657") val redundantBirthDate: String?,
+//    val birthdate: String?
 )
 
 data class PhoneDetail(
@@ -76,8 +78,19 @@ data class PhoneDetail(
     val is_private: String?,
     val people_meta_id: String,
     val sms_enrollment_status: String,
-    val sms_enrollment_updated_on: String
-)
+    val sms_enrollment_updated_on: String) {
+
+    constructor(phoneNumber: String) : this(
+        field_type = "phone",
+        phone_number = phoneNumber,
+        phone_type = "mobile",
+        do_not_text = "0",
+        is_private = "0",
+        people_meta_id = "",  // 1205817858
+        sms_enrollment_status = "",
+        sms_enrollment_updated_on = ""
+    )
+}
 
 data class EmailDetail(
     val address: String,
@@ -85,7 +98,15 @@ data class EmailDetail(
     val allow_bulk: String,
     val is_private: String,
     val field_type: String
-)
+) {
+    constructor(emailAddress: String) : this(
+        field_type = "email_primary",
+        address = emailAddress,
+        is_primary = "1",
+        allow_bulk = "1",
+        is_private = "0"
+    )
+}
 
 data class FamilyMember(
     val id: String,
