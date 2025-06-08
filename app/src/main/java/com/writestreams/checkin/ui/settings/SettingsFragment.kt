@@ -104,6 +104,10 @@ class SettingsFragment : Fragment() {
         getUpdatesButton.setOnClickListener {
             confirmThenFetchPersons()
         }
+        val deleteAllPersonsButton: Button = view.findViewById(R.id.deleteAllPersonsButton)
+        deleteAllPersonsButton.setOnClickListener {
+            confirmThenDeleteAllPersons()
+        }
     }
 
     private fun confirmThenResetCheckins() {
@@ -114,6 +118,38 @@ class SettingsFragment : Fragment() {
                 resetCheckins()
             }
             .setNegativeButton("No", null)
+            .show()
+    }
+
+    private fun confirmThenFetchPersons() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Confirm Update")
+            .setMessage("Are you sure you want to update the local members database?")
+            .setPositiveButton("Yes") { _, _ ->
+                fetchAndCachePersons()
+            }
+            .setNegativeButton("No", null)
+            .show()
+    }
+
+    private fun confirmThenDeleteAllPersons() {
+        val inputField = EditText(requireContext())
+        inputField.hint = "Enter password"
+        inputField.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Confirm Delete All")
+            .setMessage("Enter password to delete all persons")
+            .setView(inputField)
+            .setPositiveButton("Delete") { _, _ ->
+                val enteredPassword = inputField.text.toString()
+                if (enteredPassword == "confirm") {
+                    deleteAllPersons()
+                } else {
+                    Toast.makeText(requireContext(), "Incorrect Password", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 
@@ -134,17 +170,6 @@ class SettingsFragment : Fragment() {
         }
     }
 
-    private fun confirmThenFetchPersons() {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Confirm Update")
-            .setMessage("Are you sure you want to update the local members database?")
-            .setPositiveButton("Yes") { _, _ ->
-                fetchAndCachePersons()
-            }
-            .setNegativeButton("No", null)
-            .show()
-    }
-
     private fun fetchAndCachePersons() {
         lifecycleScope.launch {
             try {
@@ -158,6 +183,23 @@ class SettingsFragment : Fragment() {
             } catch (e: Exception) {
                 Log.e("SettingsFragment", "Error fetching updates", e)
                 Toast.makeText(requireContext(), "Error fetching updates", Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+    }
+
+    private fun deleteAllPersons() {
+        lifecycleScope.launch {
+            try {
+                repository.deleteAllPersons()
+                Toast.makeText(
+                    requireContext(),
+                    "All persons have been deleted",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } catch (e: Exception) {
+                Log.e("SettingsFragment", "Error deleting all persons", e)
+                Toast.makeText(requireContext(), "Error deleting all persons", Toast.LENGTH_SHORT)
                     .show()
             }
         }

@@ -101,8 +101,7 @@ class Repository(context: Context) {
 
     suspend fun getPendingCheckedInPersons(): List<Person> {
         return withContext(Dispatchers.IO) {
-            // TODO ZZZ update to return those not yet sent to Breeze
-            personDao.getCheckedInPersons()
+            personDao.getPendingCheckedInPersons()
         }
     }
 
@@ -121,6 +120,12 @@ class Repository(context: Context) {
     suspend fun addPerson(person: Person) {
         withContext(Dispatchers.IO) {
             personDao.add(person)
+        }
+    }
+
+    suspend fun deleteAllPersons() {
+        withContext(Dispatchers.IO) {
+            personDao.deleteAll()
         }
     }
 }

@@ -67,30 +67,40 @@
                         android:minHeight="32dp"
                         android:text="SGC Woodstock,Check-in" />
 
-                    <Button
-                        android:id="@+id/printButton"
-                        android:layout_width="200dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:text="Test Print" />
-
-                    <Button
-                        android:id="@+id/resetCheckinsButton"
-                        android:layout_width="200dp"
-                        android:layout_height="wrap_content"
-                        android:text="Reset Checkins" />
-
-                    <DatePicker
-                        android:id="@+id/checkinDatePicker"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="2dp" />
+                        android:orientation="horizontal"
+                        android:layout_marginTop="4dp">
+
+                        <Button
+                            android:id="@+id/printButton"
+                            android:layout_width="200dp"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="4dp"
+                            android:text="Test Print" />
+
+                        <Button
+                            android:id="@+id/resetCheckinsButton"
+                            android:layout_width="200dp"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="4dp"
+                            android:text="Reset Checkins" />
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/breezeInstanceIdTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_margin="8dp" />
+                        android:layout_margin="4dp" />
+
+                    <DatePicker
+                        android:id="@+id/checkinDatePicker"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="1dp" />
+
+
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -117,11 +127,27 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
 
-                    <Button
-                        android:id="@+id/getUpdatesButton"
-                        android:layout_width="200dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Get Updates" />
+                        android:orientation="horizontal"
+                        android:layout_marginTop="4dp">
+
+                        <Button
+                            android:id="@+id/getUpdatesButton"
+                            android:layout_width="200dp"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="4dp"
+                            android:text="Get Updates" />
+
+                        <Button
+                            android:id="@+id/deleteAllPersonsButton"
+                            android:layout_width="200dp"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="4dp"
+                            android:text="Delete All" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/versionTextView"
