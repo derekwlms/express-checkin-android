@@ -19,6 +19,12 @@
             android:checked="true" />
 
         <RadioButton
+            android:id="@+id/pendingRadioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pending" />
+
+        <RadioButton
             android:id="@+id/breezeRadioButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

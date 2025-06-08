@@ -99,6 +99,13 @@ class Repository(context: Context) {
         }
     }
 
+    suspend fun getPendingCheckedInPersons(): List<Person> {
+        return withContext(Dispatchers.IO) {
+            // TODO ZZZ update to return those not yet sent to Breeze
+            personDao.getCheckedInPersons()
+        }
+    }
+
     suspend fun searchPersons(query: String): List<Person> {
         return withContext(Dispatchers.IO) {
             personDao.searchPersons("%$query%")

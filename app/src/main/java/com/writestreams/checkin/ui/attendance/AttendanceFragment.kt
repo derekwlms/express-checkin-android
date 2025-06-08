@@ -30,6 +30,7 @@ class AttendanceFragment : Fragment() {
     private lateinit var checkinService: CheckinService
     private var personsList: List<Person> = listOf()
     private var isUsingLocalAttendeeList = true
+    private var isUsingPendingAttendeeList = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -55,6 +56,7 @@ class AttendanceFragment : Fragment() {
 
         binding.sourceRadioGroup.setOnCheckedChangeListener { _, checkedId ->
             isUsingLocalAttendeeList = checkedId == R.id.localRadioButton
+            isUsingPendingAttendeeList = checkedId == R.id.pendingRadioButton
             fetchCheckedInPersons()
         }
 
@@ -94,6 +96,8 @@ class AttendanceFragment : Fragment() {
             personsList =
                 if (isUsingLocalAttendeeList) {
                     repository.getCheckedInPersons()
+                } else if (isUsingPendingAttendeeList) {
+                    repository.getPendingCheckedInPersons()
                 } else {
                     attendanceService.getBreezeCheckedInPersons()
                 }
