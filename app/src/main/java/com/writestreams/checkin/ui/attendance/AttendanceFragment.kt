@@ -85,7 +85,7 @@ class AttendanceFragment : Fragment() {
         }
 
         binding.emailButton.setOnClickListener {
-            val attendanceList = personsList.map { "${it.nameLastFirst()} - ${it.id}" }
+            val attendanceList = personsList.map { "${it.nameLastFirst()} - ${it.id} - ${it.getFormattedCheckinTime()}" }
             val recipient = ApiKeys.EMAIL_RECIPIENTS
             attendanceService.emailAttendanceList(attendanceList, recipient)
         }

@@ -60,6 +60,16 @@ data class Person(
     fun getPrimaryPhone(): String {
         return details.phoneDetails?.firstOrNull { it.phone_number.isNotEmpty() }?.phone_number ?: ""
     }
+
+    fun getFormattedCheckinTime(): String {
+        return checkinDateTime?.let {
+            checkinDateTime?.format(CHECKIN_TIME_FORMATTER) ?: ""
+        } ?: ""
+    }
+
+    companion object {
+        private val CHECKIN_TIME_FORMATTER = java.time.format.DateTimeFormatter.ofPattern("M/d/yy h:mm:ss a")
+    }
 }
 
 data class PersonDetails(

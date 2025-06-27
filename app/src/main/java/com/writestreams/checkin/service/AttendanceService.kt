@@ -95,10 +95,16 @@ class AttendanceService(private val context: Context) {
     suspend fun getBreezeCheckedInPersons(): List<Person> {
         val instanceId = getBreezeInstanceId()
         return withContext(Dispatchers.IO) {
-            val response = breezeApiService.getAttendance(instanceId)
-            if (response.isSuccessful) {
-                response.body()?.map { it.asPerson() } ?: emptyList()
-            } else {
+            try {
+                val response = breezeApiService.getAttendance(instanceId)
+                if (response.isSuccessful) {
+                    response.body()?.map { it.asPerson() } ?: emptyList()
+                } else {
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                Log.e("getBreezeCheckedInPersons - breezeApiService.getAttendance",
+                    "Exception getting checked-in persons, probably offline", e)
                 emptyList()
             }
         }

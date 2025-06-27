@@ -19,7 +19,7 @@ class SendAttendanceEmailWorker(
         return try {
             runBlocking {
                 val personsList = repository.getCheckedInPersons()
-                val attendanceList = personsList.map { "${it.nameLastFirst()} - ${it.id}" }
+                val attendanceList = personsList.map { "${it.nameLastFirst()} - ${it.id} - ${it.getFormattedCheckinTime()}" }
                 val recipient = EMAIL_RECIPIENTS
                 attendanceService.emailAttendanceList(attendanceList, recipient)
             }
