@@ -16,6 +16,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -39,11 +40,7 @@ class Repository(context: Context) {
 
         apiService = retrofit.create(BreezeChmsApiService::class.java)
 
-        val db = Room.databaseBuilder(
-            context.applicationContext,
-            AppDatabase::class.java, "database-name"
-        ).build()
-
+        val db = AppDatabase.getDatabase(context)
         personDao = db.personDao()
     }
 
@@ -126,6 +123,12 @@ class Repository(context: Context) {
     suspend fun deleteAllPersons() {
         withContext(Dispatchers.IO) {
             personDao.deleteAll()
+        }
+    }
+
+    suspend fun setCheckedInWithBreeze(personId: String, checkedInDateTime: LocalDateTime) {
+        withContext(Dispatchers.IO) {
+            personDao.setCheckedInWithBreeze(personId, checkedInDateTime)
         }
     }
 }

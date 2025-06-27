@@ -127,6 +127,30 @@ class CheckinService(private val context: Context) {
         }
     }
 
+    fun sendLocalDataToBreeze() {
+        CoroutineScope(Dispatchers.IO).launch {
+            var sentToBreeze = false
+            try {
+                val breezeInstanceId = getBreezeInstanceId()
+                val persons = repository.getPendingCheckedInPersons()
+                persons.forEach { person ->
+                    checkInWithBreeze(person.id, LocalDateTime.now(), breezeInstanceId)
+                }
+                sentToBreeze = true
+            } catch (e: Exception) {
+                Log.e("CheckinService.sendLocalDataToBreeze",
+                    "Exception sending checked-in persons, probably offline", e)
+            }
+            withContext(Dispatchers.Main) {
+                if (sentToBreeze) {
+                    Toast.makeText(context, "Successfully sent cached data to Breeze", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Unable to send cached data to Breeze", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     private suspend fun printChildLabel(child: Person, parentPersons: List<Person?>, formattedDateTime: String) {
         val (parentName, parent2Name, phoneNumber) = getParentInfo(parentPersons)
         val childName = "${child.first_name} ${child.last_name}"
@@ -169,6 +193,7 @@ class CheckinService(private val context: Context) {
         Log.d("checkinFamily", "Checked in child: $childId at $currentDateTime")
         try {
             apiService.checkIn(childId, breezeInstanceId)
+            repository.setCheckedInWithBreeze(childId, currentDateTime)
         } catch (e: Exception) {
             Log.e("checkInWithBreeze",
                 "Exception calling checkIn API for child id $childId", e)
@@ -326,7 +351,7 @@ class CheckinService(private val context: Context) {
         }
     }
 
-    private fun addGuestToRepository(guest: Guest) {
+    private suspend fun addGuestToRepository(guest: Guest) {
         if (guest.breezeId.isNullOrEmpty()) {
             guest.breezeId = OFFLINE_BREEZE_ID_PREFIX + System.currentTimeMillis()
             Log.d("addGuestToRepository",
@@ -339,15 +364,14 @@ class CheckinService(private val context: Context) {
                 Log.d("addGuestToRepository", "Adding to local repository: guest: $guest, person: $person")
                 // TODO Add the child also? Or will the FamilyMember cover it?
             }
-            // TODO Enable this when ready
-            // repository.addPerson(person)
+             repository.addPerson(person)
         } catch (e: Exception) {
             Log.e("addGuestToRepository - repository.addPerson",
                 "Exception adding guest to repository - ${guest.firstName} ${guest.lastName}", e)
         }
     }
 
-    private fun addNewChildToRepository(newChild: Guest, parent: Person?) {
+    private suspend fun addNewChildToRepository(newChild: Guest, parent: Person?) {
         if (newChild.breezeId.isNullOrEmpty()) {
             newChild.breezeId = OFFLINE_BREEZE_ID_PREFIX + System.currentTimeMillis()
             Log.d("addNewChildToRepository",
@@ -356,8 +380,7 @@ class CheckinService(private val context: Context) {
         try {
             val person = newChild.asPerson()
             Log.d("addNewChildToRepository", "Adding to local repository: guestChild: $newChild, person: $person, parent: $parent")
-            // TODO Enable this when ready
-            // repository.addPerson(person)
+             repository.addPerson(person)
         } catch (e: Exception) {
             Log.e("addGuestToRepository - repository.addPerson",
                 "Exception adding new child to repository - ${newChild.firstName} ${newChild.lastName}", e)

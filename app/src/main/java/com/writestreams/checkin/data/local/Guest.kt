@@ -37,9 +37,8 @@ data class Guest(
             last_name = this.lastName,
             details = PersonDetails(
                 person_id = this.breezeId,
-                // TODO - Enable these when ready, also in Person.kt:
-//                birthdate = this.dateOfBirthYMD(),
-//                redundantBirthDate = this.dateOfBirthYMD(),
+                birthdate = this.dateOfBirthYMD(),
+                redundantBirthDate = this.dateOfBirthYMD(),
                 phoneDetails = listOf(PhoneDetail(this.phoneNumber)),
                 emailDetails = listOf(EmailDetail(this.emailAddress))
             ),

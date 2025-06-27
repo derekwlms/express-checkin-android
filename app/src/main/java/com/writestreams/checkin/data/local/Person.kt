@@ -21,7 +21,9 @@ data class Person(
     val family: List<FamilyMember>,
     var checkinDateTime: LocalDateTime?,
     var checkinCode: String? = "",
-    var checkinCounter: String? = ""
+    var checkinCounter: String? = "",
+    var breezeSyncDateTime: LocalDateTime? = null,
+    var tags: String? = ""
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -76,8 +78,8 @@ data class PersonDetails(
     val person_id: String,
     @SerializedName("194881525") val phoneDetails: List<PhoneDetail>,
     @SerializedName("951543614") val emailDetails: List<EmailDetail>,
-//    @SerializedName("300984657") val redundantBirthDate: String?,
-//    val birthdate: String?
+    @SerializedName("300984657") val redundantBirthDate: String?,
+    val birthdate: String?
 )
 
 data class PhoneDetail(
