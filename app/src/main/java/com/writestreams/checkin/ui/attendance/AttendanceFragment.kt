@@ -77,6 +77,7 @@ class AttendanceFragment : Fragment() {
 
         binding.syncButton.setOnClickListener {
             confirmThenSyncWithBreeze()
+            fetchCheckedInPersons()
         }
 
         binding.printButton.setOnClickListener {

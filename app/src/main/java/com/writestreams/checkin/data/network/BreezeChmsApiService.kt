@@ -64,4 +64,8 @@ interface BreezeChmsApiService {
         @Query("people_ids_json") peopleIdsArray: String,
         @Query("target_person_id") parentId: String
     ): Response<JsonObject>
+
+    @Headers("Api-Key: ${ApiKeys.BREEZE_API_KEY}")
+    @GET("profile")
+    suspend fun getProfileFields(): Response<List<JsonObject>>
 }

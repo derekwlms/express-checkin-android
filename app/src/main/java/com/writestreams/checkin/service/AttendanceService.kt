@@ -105,6 +105,9 @@ class AttendanceService(private val context: Context) {
             } catch (e: Exception) {
                 Log.e("getBreezeCheckedInPersons - breezeApiService.getAttendance",
                     "Exception getting checked-in persons, probably offline", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Error getting Breeze data. Is it offline?", Toast.LENGTH_SHORT).show()
+                }
                 emptyList()
             }
         }

@@ -130,23 +130,36 @@ class CheckinService(private val context: Context) {
     fun sendLocalDataToBreeze() {
         CoroutineScope(Dispatchers.IO).launch {
             var sentToBreeze = false
-            try {
-                val breezeInstanceId = getBreezeInstanceId()
-                val persons = repository.getPendingCheckedInPersons()
-                persons.forEach { person ->
-                    checkInWithBreeze(person.id, LocalDateTime.now(), breezeInstanceId)
+            var pendingPersons = emptyList<Person>()
+            val isAvailable = isBreezeAccessible()
+            if (isAvailable) {
+                try {
+                    pendingPersons = repository.getPendingCheckedInPersons()
+                    val breezeInstanceId = getBreezeInstanceId()
+                    // TODO Also add to breeze all guests and guestChilds that were created while offline
+                    pendingPersons.forEach { person ->
+                        checkInWithBreeze(person.id, LocalDateTime.now(), breezeInstanceId)
+                    }
+                    sentToBreeze = true
+                } catch (e: Exception) {
+                    Log.e(
+                        "CheckinService.sendLocalDataToBreeze",
+                        "Exception sending checked-in persons, probably offline", e
+                    )
                 }
-                sentToBreeze = true
-            } catch (e: Exception) {
-                Log.e("CheckinService.sendLocalDataToBreeze",
-                    "Exception sending checked-in persons, probably offline", e)
             }
             withContext(Dispatchers.Main) {
-                if (sentToBreeze) {
-                    Toast.makeText(context, "Successfully sent cached data to Breeze", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(context, "Unable to send cached data to Breeze", Toast.LENGTH_SHORT).show()
-                }
+                val message =
+                    if (!isAvailable) {
+                        "Unable to access Breeze; cannot send pending data now"
+                    } else if (pendingPersons.isEmpty()) {
+                        "No pending data to send to Breeze"
+                    } else if (sentToBreeze) {
+                        "Successfully sent cached data to Breeze"
+                    } else {
+                        "Unable to send cached data to Breeze"
+                    }
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -351,6 +364,16 @@ class CheckinService(private val context: Context) {
         }
     }
 
+    private suspend fun isBreezeAccessible() : Boolean {
+        return try {
+            apiService.getProfileFields()
+            true
+        } catch (e: Exception) {
+            Log.e("isBreezeAccessible", "Exception calling getting profile fields, probably offline", e)
+            false
+        }
+    }
+
     private suspend fun addGuestToRepository(guest: Guest) {
         if (guest.breezeId.isNullOrEmpty()) {
             guest.breezeId = OFFLINE_BREEZE_ID_PREFIX + System.currentTimeMillis()
@@ -360,9 +383,10 @@ class CheckinService(private val context: Context) {
         try {
             val person = guest.asPerson()
             Log.d("addGuestToRepository", "Adding to local repository: guest: $guest, person: $person")
-            for (child in guest.children) {
+            for (guestChild in guest.children) {
                 Log.d("addGuestToRepository", "Adding to local repository: guest: $guest, person: $person")
-                // TODO Add the child also? Or will the FamilyMember cover it?
+                // TODO Does the parent need the familyMembers set?
+                repository.addPerson(guestChild.asPerson())
             }
              repository.addPerson(person)
         } catch (e: Exception) {
