@@ -127,8 +127,46 @@ class CheckinService(private val context: Context) {
         }
     }
 
+    fun sendLocalDataToBreeze() {
+        CoroutineScope(Dispatchers.IO).launch {
+            var sentToBreeze = false
+            var pendingPersons = emptyList<Person>()
+            val isAvailable = isBreezeAccessible()
+            if (isAvailable) {
+                try {
+                    pendingPersons = repository.getPendingCheckedInPersons()
+                    val breezeInstanceId = getBreezeInstanceId()
+                    // TODO Also add to breeze all guests and guestChilds that were created while offline
+                    pendingPersons.forEach { person ->
+                        checkInWithBreeze(person.id, LocalDateTime.now(), breezeInstanceId)
+                    }
+                    sentToBreeze = true
+                } catch (e: Exception) {
+                    Log.e(
+                        "CheckinService.sendLocalDataToBreeze",
+                        "Exception sending checked-in persons, probably offline", e
+                    )
+                }
+            }
+            withContext(Dispatchers.Main) {
+                val message =
+                    if (!isAvailable) {
+                        "Unable to access Breeze; cannot send pending data now"
+                    } else if (pendingPersons.isEmpty()) {
+                        "No pending data to send to Breeze"
+                    } else if (sentToBreeze) {
+                        "Successfully sent cached data to Breeze"
+                    } else {
+                        "Unable to send cached data to Breeze"
+                    }
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     private suspend fun printChildLabel(child: Person, parentPersons: List<Person?>, formattedDateTime: String) {
         val (parentName, parent2Name, phoneNumber) = getParentInfo(parentPersons)
+        // TODO If child has a mobilePhone, use it
         val childName = "${child.first_name} ${child.last_name}"
         val childLabel = ChildLabel(formattedDateTime, child.checkinCounter!!,
             childName, phoneNumber, child.checkinCode!!, "$parentName - $parent2Name")
@@ -169,6 +207,7 @@ class CheckinService(private val context: Context) {
         Log.d("checkinFamily", "Checked in child: $childId at $currentDateTime")
         try {
             apiService.checkIn(childId, breezeInstanceId)
+            repository.setCheckedInWithBreeze(childId, currentDateTime)
         } catch (e: Exception) {
             Log.e("checkInWithBreeze",
                 "Exception calling checkIn API for child id $childId", e)
@@ -326,41 +365,88 @@ class CheckinService(private val context: Context) {
         }
     }
 
-    private fun addGuestToRepository(guest: Guest) {
+    private suspend fun isBreezeAccessible() : Boolean {
+        return try {
+            apiService.getProfileFields()
+            true
+        } catch (e: Exception) {
+            Log.e("isBreezeAccessible", "Exception calling getting profile fields, probably offline", e)
+            false
+        }
+    }
+
+    private suspend fun addGuestToRepository(guest: Guest) {
         if (guest.breezeId.isNullOrEmpty()) {
             guest.breezeId = OFFLINE_BREEZE_ID_PREFIX + System.currentTimeMillis()
             Log.d("addGuestToRepository",
                 "Breeze ID not set, so assigning offline ID for guest: ${guest.breezeId}, guest: $guest")
+            // If offline, fall back to using the guest data directly
+            saveGuestToRepository(guest)
+            return
         }
         try {
-            val person = guest.asPerson()
-            Log.d("addGuestToRepository", "Adding to local repository: guest: $guest, person: $person")
-            for (child in guest.children) {
-                Log.d("addGuestToRepository", "Adding to local repository: guest: $guest, person: $person")
-                // TODO Add the child also? Or will the FamilyMember cover it?
+            // Fetch the newly created person from Breeze
+            val breezeParentPerson = apiService.getPerson(guest.breezeId).execute().body()
+            if (breezeParentPerson != null) {
+                repository.addPerson(breezeParentPerson)
+                for (guestChild in guest.children) {
+                    if (!guestChild.breezeId.isNullOrEmpty()) {
+                        val breezeChild = apiService.getPerson(guestChild.breezeId).execute().body()
+                        if (breezeChild != null) {
+                            repository.addPerson(breezeChild)
+                            // Redundant check-in to work around Breeze delay on add
+                            checkInWithBreeze(guestChild.breezeId, LocalDateTime.now(), getBreezeInstanceId())
+                        }
+                    }
+                }
+            } else {
+                Log.w("addGuestToRepository", "Could not fetch person from Breeze, falling back to guest data")
+                saveGuestToRepository(guest)
             }
-            // TODO Enable this when ready
-            // repository.addPerson(person)
         } catch (e: Exception) {
-            Log.e("addGuestToRepository - repository.addPerson",
-                "Exception adding guest to repository - ${guest.firstName} ${guest.lastName}", e)
+            Log.e("addGuestToRepository",
+                "Exception fetching/adding guest family to repository - ${guest.firstName} ${guest.lastName}", e)
         }
     }
 
-    private fun addNewChildToRepository(newChild: Guest, parent: Person?) {
+    private suspend fun saveGuestToRepository(guest: Guest) {
+        val person = guest.asPerson()
+        Log.d("saveGuestToRepository", "Adding to local repository: guest: $guest, person: $person")
+        repository.addPerson(person)
+        for (guestChild in guest.children) {
+            if (guestChild.breezeId.isNullOrEmpty()) {
+                guestChild.breezeId = "${OFFLINE_BREEZE_ID_PREFIX}${System.currentTimeMillis()}_${guestChild.firstName}"
+            }
+            repository.addPerson(guestChild.asPerson())
+            // Redundant check-in to work around Breeze delay on add
+            checkInWithBreeze(guestChild.breezeId, LocalDateTime.now(), getBreezeInstanceId())
+        }
+    }
+
+    private suspend fun addNewChildToRepository(newChild: Guest, parent: Person?) {
         if (newChild.breezeId.isNullOrEmpty()) {
             newChild.breezeId = OFFLINE_BREEZE_ID_PREFIX + System.currentTimeMillis()
             Log.d("addNewChildToRepository",
                 "Breeze ID not set, so assigning offline ID: ${newChild.breezeId}, guest: $newChild, parent: $parent")
+            // If offline, fall back to using the guest data directly
+            repository.addPerson(newChild.asPerson())
+            return
         }
         try {
-            val person = newChild.asPerson()
-            Log.d("addNewChildToRepository", "Adding to local repository: guestChild: $newChild, person: $person, parent: $parent")
-            // TODO Enable this when ready
-            // repository.addPerson(person)
+            // Fetch the newly created child from Breeze
+            val newChildBreezePerson = apiService.getPerson(newChild.breezeId).execute().body()
+            if (newChildBreezePerson != null) {
+                Log.d("addNewChildToRepository",
+                    "Adding Breeze person to repository: $newChildBreezePerson, parent: $parent")
+                repository.addPerson(newChildBreezePerson)
+            } else {
+                Log.w("addNewChildToRepository",
+                    "Could not fetch person from Breeze, falling back to guest data")
+                repository.addPerson(newChild.asPerson())
+            }
         } catch (e: Exception) {
-            Log.e("addGuestToRepository - repository.addPerson",
-                "Exception adding new child to repository - ${newChild.firstName} ${newChild.lastName}", e)
+            Log.e("addNewChildToRepository",
+                "Exception fetching/adding child to repository - ${newChild.firstName} ${newChild.lastName}", e)
         }
     }
 

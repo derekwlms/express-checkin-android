@@ -28,4 +28,6 @@ data class GuestChild(
             children = emptyList()
         )
     }
+
+    fun asPerson(): Person = asGuest().asPerson()
 }

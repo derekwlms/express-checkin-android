@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import java.time.LocalDateTime
 
 @Dao
 interface PersonDao {
@@ -17,14 +18,17 @@ interface PersonDao {
     @Query("SELECT * FROM persons WHERE checkinDateTime IS NOT NULL")
     fun getCheckedInPersons(): List<Person>
 
-    @Query("SELECT * FROM persons WHERE checkinDateTime IS NOT NULL")
+    @Query("SELECT * FROM persons WHERE checkinDateTime IS NOT NULL AND breezeSyncDateTime IS NULL")
     fun getPendingCheckedInPersons(): List<Person>
 
     @Query("SELECT * FROM persons WHERE first_name LIKE :query OR last_name LIKE :query ORDER BY last_name, first_name")
     fun searchPersons(query: String): List<Person>
 
-    @Query("UPDATE persons SET checkinDateTime = null, checkinCode = null, checkinCounter = null")
+    @Query("UPDATE persons SET checkinDateTime = null, checkinCode = null, checkinCounter = null, breezeSyncDateTime = null")
     fun resetAllCheckins()
+
+    @Query("UPDATE persons SET breezeSyncDateTime = :breezeSyncDateTime WHERE id = :personId")
+    fun setCheckedInWithBreeze(personId: String, breezeSyncDateTime: LocalDateTime)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertAll(persons: List<Person>)

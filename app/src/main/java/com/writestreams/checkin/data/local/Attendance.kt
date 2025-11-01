@@ -18,7 +18,7 @@ data class Attendance(
             nick_name = attendee.nick_name,
             middle_name = attendee.middle_name,
             maiden_name = "",
-            details = PersonDetails(person_id, emptyList(), emptyList()),
+            details = PersonDetails(person_id, emptyList(), emptyList(), null, null),
             family = emptyList(),
             checkinDateTime = null,
             checkinCode = "",

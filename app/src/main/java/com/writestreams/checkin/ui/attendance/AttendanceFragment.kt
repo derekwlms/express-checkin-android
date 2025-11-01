@@ -77,6 +77,7 @@ class AttendanceFragment : Fragment() {
 
         binding.syncButton.setOnClickListener {
             confirmThenSyncWithBreeze()
+            fetchCheckedInPersons()
         }
 
         binding.printButton.setOnClickListener {
@@ -120,10 +121,9 @@ class AttendanceFragment : Fragment() {
     private fun confirmThenSyncWithBreeze() {
         AlertDialog.Builder(requireContext())
             .setTitle("Sync with Breeze")
-            .setMessage("Do you want to send local data to breeze - NOT FINISHED YET?")
+            .setMessage("Do you want to send local data to breeze?")
             .setPositiveButton("Yes") { _, _ ->
-                // TODO FINISH
-//                attendanceService.sendLocalDataToBreeze()
+                checkinService.sendLocalDataToBreeze()
             }
             .setNegativeButton("No", null)
             .show()
