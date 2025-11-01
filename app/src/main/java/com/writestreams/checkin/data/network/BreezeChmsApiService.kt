@@ -8,12 +8,17 @@ import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Headers
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface BreezeChmsApiService {
     @Headers("Api-Key: ${ApiKeys.BREEZE_API_KEY}")
     @GET("people")
     fun getPersons(@Query("details") details: Int = 1): Call<List<Person>>
+
+    @Headers("Api-Key: ${ApiKeys.BREEZE_API_KEY}")
+    @GET("people/{breezeId}")
+    fun getPerson(@Path("breezeId") breezeId: String): Call<Person>
 
     @Headers("Api-Key: ${ApiKeys.BREEZE_API_KEY}")
     @GET("events/attendance/add")

@@ -166,6 +166,7 @@ class CheckinService(private val context: Context) {
 
     private suspend fun printChildLabel(child: Person, parentPersons: List<Person?>, formattedDateTime: String) {
         val (parentName, parent2Name, phoneNumber) = getParentInfo(parentPersons)
+        // TODO If child has a mobilePhone, use it
         val childName = "${child.first_name} ${child.last_name}"
         val childLabel = ChildLabel(formattedDateTime, child.checkinCounter!!,
             childName, phoneNumber, child.checkinCode!!, "$parentName - $parent2Name")
@@ -379,19 +380,46 @@ class CheckinService(private val context: Context) {
             guest.breezeId = OFFLINE_BREEZE_ID_PREFIX + System.currentTimeMillis()
             Log.d("addGuestToRepository",
                 "Breeze ID not set, so assigning offline ID for guest: ${guest.breezeId}, guest: $guest")
+            // If offline, fall back to using the guest data directly
+            saveGuestToRepository(guest)
+            return
         }
         try {
-            val person = guest.asPerson()
-            Log.d("addGuestToRepository", "Adding to local repository: guest: $guest, person: $person")
-            for (guestChild in guest.children) {
-                Log.d("addGuestToRepository", "Adding to local repository: guest: $guest, person: $person")
-                // TODO Does the parent need the familyMembers set?
-                repository.addPerson(guestChild.asPerson())
+            // Fetch the newly created person from Breeze
+            val breezeParentPerson = apiService.getPerson(guest.breezeId).execute().body()
+            if (breezeParentPerson != null) {
+                repository.addPerson(breezeParentPerson)
+                for (guestChild in guest.children) {
+                    if (!guestChild.breezeId.isNullOrEmpty()) {
+                        val breezeChild = apiService.getPerson(guestChild.breezeId).execute().body()
+                        if (breezeChild != null) {
+                            repository.addPerson(breezeChild)
+                            // Redundant check-in to work around Breeze delay on add
+                            checkInWithBreeze(guestChild.breezeId, LocalDateTime.now(), getBreezeInstanceId())
+                        }
+                    }
+                }
+            } else {
+                Log.w("addGuestToRepository", "Could not fetch person from Breeze, falling back to guest data")
+                saveGuestToRepository(guest)
             }
-             repository.addPerson(person)
         } catch (e: Exception) {
-            Log.e("addGuestToRepository - repository.addPerson",
-                "Exception adding guest to repository - ${guest.firstName} ${guest.lastName}", e)
+            Log.e("addGuestToRepository",
+                "Exception fetching/adding guest family to repository - ${guest.firstName} ${guest.lastName}", e)
+        }
+    }
+
+    private suspend fun saveGuestToRepository(guest: Guest) {
+        val person = guest.asPerson()
+        Log.d("saveGuestToRepository", "Adding to local repository: guest: $guest, person: $person")
+        repository.addPerson(person)
+        for (guestChild in guest.children) {
+            if (guestChild.breezeId.isNullOrEmpty()) {
+                guestChild.breezeId = "${OFFLINE_BREEZE_ID_PREFIX}${System.currentTimeMillis()}_${guestChild.firstName}"
+            }
+            repository.addPerson(guestChild.asPerson())
+            // Redundant check-in to work around Breeze delay on add
+            checkInWithBreeze(guestChild.breezeId, LocalDateTime.now(), getBreezeInstanceId())
         }
     }
 
@@ -400,14 +428,25 @@ class CheckinService(private val context: Context) {
             newChild.breezeId = OFFLINE_BREEZE_ID_PREFIX + System.currentTimeMillis()
             Log.d("addNewChildToRepository",
                 "Breeze ID not set, so assigning offline ID: ${newChild.breezeId}, guest: $newChild, parent: $parent")
+            // If offline, fall back to using the guest data directly
+            repository.addPerson(newChild.asPerson())
+            return
         }
         try {
-            val person = newChild.asPerson()
-            Log.d("addNewChildToRepository", "Adding to local repository: guestChild: $newChild, person: $person, parent: $parent")
-             repository.addPerson(person)
+            // Fetch the newly created child from Breeze
+            val newChildBreezePerson = apiService.getPerson(newChild.breezeId).execute().body()
+            if (newChildBreezePerson != null) {
+                Log.d("addNewChildToRepository",
+                    "Adding Breeze person to repository: $newChildBreezePerson, parent: $parent")
+                repository.addPerson(newChildBreezePerson)
+            } else {
+                Log.w("addNewChildToRepository",
+                    "Could not fetch person from Breeze, falling back to guest data")
+                repository.addPerson(newChild.asPerson())
+            }
         } catch (e: Exception) {
-            Log.e("addGuestToRepository - repository.addPerson",
-                "Exception adding new child to repository - ${newChild.firstName} ${newChild.lastName}", e)
+            Log.e("addNewChildToRepository",
+                "Exception fetching/adding child to repository - ${newChild.firstName} ${newChild.lastName}", e)
         }
     }
 

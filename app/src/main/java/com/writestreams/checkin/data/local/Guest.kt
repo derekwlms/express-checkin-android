@@ -42,7 +42,8 @@ data class Guest(
                 phoneDetails = listOf(PhoneDetail(this.phoneNumber)),
                 emailDetails = listOf(EmailDetail(this.emailAddress))
             ),
-            family = emptyList(), // this.children.map { it.asFamilyMember(this) },
+            // TODO Determine if we want to build the family locally when offline, or just wait until online
+            family = emptyList(), // listOf(this.asFamilyMember()) + children.map { it.asFamilyMember() },
             checkinDateTime = checkinLocalDateTime,
             checkinCode = this.checkinCode,
             checkinCounter = this.checkinCounter,
