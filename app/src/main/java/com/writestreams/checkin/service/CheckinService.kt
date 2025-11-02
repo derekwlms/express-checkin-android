@@ -165,9 +165,11 @@ class CheckinService(private val context: Context) {
     }
 
     private suspend fun printChildLabel(child: Person, parentPersons: List<Person?>, formattedDateTime: String) {
-        val (parentName, parent2Name, phoneNumber) = getParentInfo(parentPersons)
-        // TODO If child has a mobilePhone, use it
+        val (parentName, parent2Name, parentPhoneNumber) = getParentInfo(parentPersons)
         val childName = "${child.first_name} ${child.last_name}"
+        val childPhoneNumber = child.details?.phoneDetails?.firstOrNull {
+            it.phone_number.isNotEmpty() }?.phone_number.orEmpty()
+        val phoneNumber = childPhoneNumber.ifEmpty { parentPhoneNumber }
         val childLabel = ChildLabel(formattedDateTime, child.checkinCounter!!,
             childName, phoneNumber, child.checkinCode!!, "$parentName - $parent2Name")
         bluetoothPrintService.printLabel(childLabel)
