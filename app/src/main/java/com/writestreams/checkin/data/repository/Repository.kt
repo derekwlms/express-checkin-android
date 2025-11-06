@@ -102,6 +102,12 @@ class Repository(context: Context) {
         }
     }
 
+    suspend fun getPendingNewPersons(): List<Person> {
+        return withContext(Dispatchers.IO) {
+            personDao.getPendingNewPersons()
+        }
+    }
+
     suspend fun searchPersons(query: String): List<Person> {
         return withContext(Dispatchers.IO) {
             personDao.searchPersons("%$query%")
@@ -117,6 +123,12 @@ class Repository(context: Context) {
     suspend fun addPerson(person: Person) {
         withContext(Dispatchers.IO) {
             personDao.add(person)
+        }
+    }
+
+    suspend fun deletePerson(person: Person) {
+        withContext(Dispatchers.IO) {
+            personDao.delete(person)
         }
     }
 

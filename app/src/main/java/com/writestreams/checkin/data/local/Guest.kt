@@ -27,10 +27,18 @@ data class Guest(
     }
 
     fun asPerson(): Person {
+        // Clean this up for consistent date/time formats
+        // Some differences are necessary: breeze format, label format, and attendance list format
         val checkinLocalDateTime = runCatching {
-            if (this.checkinDateTime.isNotEmpty())
-                LocalDateTime.parse(this.checkinDateTime, DateTimeFormatter.ofPattern("MM/dd/yyyy"))
-            else null }.getOrNull()
+            when {
+                checkinDateTime.isEmpty() -> null
+                else -> LocalDateTime.parse(checkinDateTime,
+                    DateTimeFormatter.ofPattern("MMM d, yyyy (h:mm a)"))
+            }
+        }.recoverCatching {
+            LocalDateTime.parse(checkinDateTime,
+                DateTimeFormatter.ofPattern("MM/dd/yyyy"))
+        }.getOrNull()
         return Person(
             id = this.breezeId,
             first_name = this.firstName,
@@ -42,7 +50,6 @@ data class Guest(
                 phoneDetails = listOf(PhoneDetail(this.phoneNumber)),
                 emailDetails = listOf(EmailDetail(this.emailAddress))
             ),
-            // TODO Determine if we want to build the family locally when offline, or just wait until online
             family = emptyList(), // listOf(this.asFamilyMember()) + children.map { it.asFamilyMember() },
             checkinDateTime = checkinLocalDateTime,
             checkinCode = this.checkinCode,

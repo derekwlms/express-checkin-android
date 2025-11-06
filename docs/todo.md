@@ -2,8 +2,7 @@
 
 - Check-in
   - Allow allergies, print on label - use "tags"
-  - If a child has a mobile phone, use it
-    - Or select mobile number for label
+  - select mobile number for label
 - Check-in - guest, new child
   - Add guests and new child to attendance list / database
 - Check-in lists
@@ -17,7 +16,7 @@
   - Draw, refactor, decouple (ex, move logic from Fragments to Services, apiService and repository holders)
     - Also resolve Person vs Guest vs GuestChild vs FamilyMember
     - Better align these with Breeze's strange models (asPerson, etc)
-    - Align and/or combine addGuestToBreeze with addGuestToRepository 
+    - Align and/or combine addGuestToBreeze with addGuestToRepository
       - If Breeze is online, can just fetch the new person from Breeze and add it to the repository
   - Remote logs/monitoring. Crashlytics? PostHog? (https://posthog.com/docs/error-tracking)
   - Switch to Material for views, validation, etc?

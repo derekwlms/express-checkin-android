@@ -69,6 +69,18 @@ data class Person(
         } ?: ""
     }
 
+    fun asGuest(): Guest {
+        return Guest(
+            firstName = this.first_name,
+            lastName = this.last_name,
+            dateOfBirth = null,
+            phoneNumber = this.getPrimaryPhone(),
+            emailAddress = this.getPrimaryEmailAddress(),
+            breezeId = this.id,
+            children = emptyList()
+        )
+    }
+
     companion object {
         private val CHECKIN_TIME_FORMATTER = java.time.format.DateTimeFormatter.ofPattern("M/d/yy h:mm:ss a")
     }

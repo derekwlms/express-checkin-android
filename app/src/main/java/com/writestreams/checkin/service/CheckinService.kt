@@ -67,15 +67,18 @@ class CheckinService(private val context: Context) {
         mailgunService = mailRetrofit.create(MailgunService::class.java)
     }
 
-    fun checkinFamily(existingFamilyMembers: List<FamilyMember>,
-                      checkedFamilyMembers: Set<FamilyMember>,
-                      newChildren: List<GuestChild>) {
+    fun checkinFamily(
+        existingFamilyMembers: List<FamilyMember>,
+        checkedFamilyMembers: Set<FamilyMember>,
+        newChildren: List<GuestChild>
+    ) {
         val currentDateTime = LocalDateTime.now()
         val formattedDateTime = dateTimeFormatter.format(currentDateTime)
         val checkinCode = Random.nextInt(1000, 9999).toString()
         val breezeInstanceId = getBreezeInstanceId()
         CoroutineScope(Dispatchers.IO).launch {
-            val parentFamilyMembers = existingFamilyMembers.filter { it.family_role_id != FAMILY_ROLE_CHILD }
+            val parentFamilyMembers =
+                existingFamilyMembers.filter { it.family_role_id != FAMILY_ROLE_CHILD }
             val parentPersons = parentFamilyMembers.map { repository.getPersonById(it.person_id) }
             for (member in checkedFamilyMembers) {
                 val childPerson = repository.getPersonById(member.person_id)
@@ -129,38 +132,52 @@ class CheckinService(private val context: Context) {
 
     fun sendLocalDataToBreeze() {
         CoroutineScope(Dispatchers.IO).launch {
-            var sentToBreeze = false
-            var pendingPersons = emptyList<Person>()
-            val isAvailable = isBreezeAccessible()
-            if (isAvailable) {
-                try {
-                    pendingPersons = repository.getPendingCheckedInPersons()
-                    val breezeInstanceId = getBreezeInstanceId()
-                    // TODO Also add to breeze all guests and guestChilds that were created while offline
-                    pendingPersons.forEach { person ->
-                        checkInWithBreeze(person.id, LocalDateTime.now(), breezeInstanceId)
-                    }
-                    sentToBreeze = true
-                } catch (e: Exception) {
-                    Log.e(
-                        "CheckinService.sendLocalDataToBreeze",
-                        "Exception sending checked-in persons, probably offline", e
-                    )
-                }
+            var message = ""
+            if (isBreezeAccessible()) {
+                message += sendPendingNewPersonsToBreeze()
+                message += sendPendingCheckinsToBreeze()
+            } else {
+                message = "Unable to access Breeze; cannot send pending data now"
             }
             withContext(Dispatchers.Main) {
-                val message =
-                    if (!isAvailable) {
-                        "Unable to access Breeze; cannot send pending data now"
-                    } else if (pendingPersons.isEmpty()) {
-                        "No pending data to send to Breeze"
-                    } else if (sentToBreeze) {
-                        "Successfully sent cached data to Breeze"
-                    } else {
-                        "Unable to send cached data to Breeze"
-                    }
+                if (message.isEmpty()) {
+                    message = "Successfully sent cached data to Breeze"
+                }
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    suspend fun sendPendingCheckinsToBreeze(): String {
+        return try {
+            val pendingCheckinPersons = repository.getPendingCheckedInPersons()
+            val breezeInstanceId = getBreezeInstanceId()
+            pendingCheckinPersons.forEach { person ->
+                checkInWithBreeze(person.id, LocalDateTime.now(), breezeInstanceId)
+            }
+            "${pendingCheckinPersons.count()} check-ins"
+        } catch (e: Exception) {
+            Log.e("CheckinService.sendLocalDataToBreeze",
+                    "Exception sending checked-in persons, probably offline", e)
+            "Unable to send check-ins, probably offline"
+        }
+    }
+
+    suspend fun sendPendingNewPersonsToBreeze(): String {
+        return try {
+            val pendingNewPersons = repository.getPendingNewPersons()
+            pendingNewPersons.forEach { person ->
+                val guest = person.asGuest()
+                Log.i("sendPendingNewPersonsToBreeze", "adding $person, $guest")
+                addGuestToBreeze(guest)
+                repository.deletePerson(person)
+                addGuestToRepository(guest)
+            }
+            "${pendingNewPersons.count()} additions, "
+        } catch (e: Exception) {
+            Log.e("CheckinService.sendPendingNewPersonsToBreeze",
+                    "Exception sending pending new persons, probably offline", e)
+            "Unable to send additions, probably offline"
         }
     }
 
