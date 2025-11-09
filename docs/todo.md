@@ -2,15 +2,9 @@
 
 - Check-in
   - Allow allergies, print on label - use "tags"
-  - select mobile number for label
-- Check-in - guest, new child
-  - Add guests and new child to attendance list / database
 - Check-in lists
   - Search - phone number
   - Search - first and last name
-- Settings
-  - Send cached check-ins and adds after offline (SAF) - show counts of check-in and adds
-  - Offline testing
 - Misc
   - SGC logo on labels
   - Draw, refactor, decouple (ex, move logic from Fragments to Services, apiService and repository holders)

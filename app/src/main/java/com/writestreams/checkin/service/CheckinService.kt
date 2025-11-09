@@ -70,7 +70,8 @@ class CheckinService(private val context: Context) {
     fun checkinFamily(
         existingFamilyMembers: List<FamilyMember>,
         checkedFamilyMembers: Set<FamilyMember>,
-        newChildren: List<GuestChild>
+        newChildren: List<GuestChild>,
+        mobilePhoneNumber: String
     ) {
         val currentDateTime = LocalDateTime.now()
         val formattedDateTime = dateTimeFormatter.format(currentDateTime)
@@ -87,7 +88,7 @@ class CheckinService(private val context: Context) {
                     it.checkinCode = checkinCode
                     it.checkinCounter = (++checkinCounter).toString()
                     repository.updatePerson(it)
-                    printChildLabel(it, parentPersons, formattedDateTime)
+                    printChildLabel(it, parentPersons, formattedDateTime, mobilePhoneNumber)
                     checkInWithBreeze(it.id, currentDateTime, breezeInstanceId)
                 }
             }
@@ -181,12 +182,24 @@ class CheckinService(private val context: Context) {
         }
     }
 
-    private suspend fun printChildLabel(child: Person, parentPersons: List<Person?>, formattedDateTime: String) {
+    suspend fun getPhoneNumbers(person: Person): List<String> {
+        val phoneNumbers = mutableListOf<String>()
+        person.family.forEach { familyMember ->
+            val familyMemberPerson = repository.getPersonById(familyMember.person_id)
+            familyMemberPerson?.details?.phoneDetails?.forEach { phoneDetail ->
+                phoneDetail.phone_number.takeIf { it.isNotEmpty() }?.let { phoneNumbers.add(it) }
+            }
+        }
+        return phoneNumbers.distinct()
+    }
+
+    private suspend fun printChildLabel(child: Person, parentPersons: List<Person?>,
+                                        formattedDateTime: String, mobilePhoneNumber: String) {
         val (parentName, parent2Name, parentPhoneNumber) = getParentInfo(parentPersons)
         val childName = "${child.first_name} ${child.last_name}"
         val childPhoneNumber = child.details?.phoneDetails?.firstOrNull {
             it.phone_number.isNotEmpty() }?.phone_number.orEmpty()
-        val phoneNumber = childPhoneNumber.ifEmpty { parentPhoneNumber }
+        val phoneNumber = mobilePhoneNumber.ifEmpty { childPhoneNumber.ifEmpty { parentPhoneNumber }}
         val childLabel = ChildLabel(formattedDateTime, child.checkinCounter!!,
             childName, phoneNumber, child.checkinCode!!, "$parentName - $parent2Name")
         bluetoothPrintService.printLabel(childLabel)

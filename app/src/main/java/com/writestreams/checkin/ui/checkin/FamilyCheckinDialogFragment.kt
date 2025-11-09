@@ -5,14 +5,19 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.writestreams.checkin.data.local.GuestChild
 import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.databinding.DialogFamilyCheckinBinding
 import com.writestreams.checkin.databinding.ItemChildBinding
+import com.writestreams.checkin.R
 import com.writestreams.checkin.service.CheckinService
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
@@ -23,6 +28,7 @@ class FamilyCheckinDialogFragment(private val person: Person) : DialogFragment()
     private val binding get() = _binding!!
     private lateinit var adapter: FamilyMemberAdapter
     private lateinit var checkinService: CheckinService
+    private var selectedPhoneNumber: String = ""
     private var childCount = 1
 
     override fun onCreateView(
@@ -38,6 +44,7 @@ class FamilyCheckinDialogFragment(private val person: Person) : DialogFragment()
 
         checkinService = CheckinService(requireContext())
 
+        setupPhoneSpinner(person)
         binding.personNameTextView.text = "${person.first_name} ${person.last_name}"
 //        binding.personDetailsTextView.text = person.toString()
 
@@ -58,7 +65,8 @@ class FamilyCheckinDialogFragment(private val person: Person) : DialogFragment()
                     Toast.LENGTH_SHORT).show()
             } else {
                 val checkedFamilyMembers = adapter.getCheckedFamilyMembers()
-                checkinService.checkinFamily(familyMembers, checkedFamilyMembers, getNewChildren())
+                checkinService.checkinFamily(familyMembers, checkedFamilyMembers,
+                    getNewChildren(), selectedPhoneNumber)
                 dismiss()
             }
         }
@@ -70,6 +78,27 @@ class FamilyCheckinDialogFragment(private val person: Person) : DialogFragment()
             } else {
                 Toast.makeText(requireContext(), "Please add again for more than 5 children",
                     Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun setupPhoneSpinner(person: Person) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val phoneNumbers = checkinService.getPhoneNumbers(person)
+            val adapter = ArrayAdapter(requireContext(), R.layout.spinner_item_centered, phoneNumbers).apply {
+                setDropDownViewResource(R.layout.spinner_item_centered)
+            }
+            binding.phoneSpinner.apply {
+                this.adapter = adapter
+                onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                        selectedPhoneNumber = if (position > 0) phoneNumbers[position] else ""
+                    }
+                    override fun onNothingSelected(parent: AdapterView<*>?) { selectedPhoneNumber = "" }
+                }
+            }
+            if (phoneNumbers.size > 1) {
+                binding.phoneSpinner.setSelection(1)
             }
         }
     }
