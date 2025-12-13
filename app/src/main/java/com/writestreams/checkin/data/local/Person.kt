@@ -91,7 +91,8 @@ data class PersonDetails(
     @SerializedName("194881525") val phoneDetails: List<PhoneDetail>,
     @SerializedName("951543614") val emailDetails: List<EmailDetail>,
     @SerializedName("300984657") val redundantBirthDate: String?,
-    val birthdate: String?
+    val birthdate: String?,
+    val notes: String?     // Also in 1500745418
 )
 
 data class PhoneDetail(

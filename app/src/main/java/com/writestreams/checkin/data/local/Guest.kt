@@ -48,7 +48,8 @@ data class Guest(
                 birthdate = this.dateOfBirthYMD(),
                 redundantBirthDate = this.dateOfBirthYMD(),
                 phoneDetails = listOf(PhoneDetail(this.phoneNumber)),
-                emailDetails = listOf(EmailDetail(this.emailAddress))
+                emailDetails = listOf(EmailDetail(this.emailAddress)),
+                notes = null
             ),
             family = emptyList(), // listOf(this.asFamilyMember()) + children.map { it.asFamilyMember() },
             checkinDateTime = checkinLocalDateTime,
