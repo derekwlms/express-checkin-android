@@ -1,7 +1,5 @@
 ## To do
 
-- Check-in
-  - Allow allergies, print on label - use "tags"
 - Check-in lists
   - Search - phone number
   - Search - first and last name

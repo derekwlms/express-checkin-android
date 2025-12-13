@@ -37,6 +37,8 @@ class CheckinService(private val context: Context) {
     private val bluetoothPrintService = BluetoothPrintService(context)
     private val mailgunService: MailgunService
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy (h:mm a)")
+        // Do not print Breeze-automated notes on labels; exampLe:  "3042 - Fred & Wilma"
+    private val EXCLUDED_NOTES_FORMAT_REGEX = """^\d{2,}\s*-\s*.+""".toRegex()
 
     companion object {
         const val FAMILY_ROLE_CHILD = "2"
@@ -199,9 +201,12 @@ class CheckinService(private val context: Context) {
         val childName = "${child.first_name} ${child.last_name}"
         val childPhoneNumber = child.details?.phoneDetails?.firstOrNull {
             it.phone_number.isNotEmpty() }?.phone_number.orEmpty()
+        val childNotes = child.details?.notes?.let {
+            if (EXCLUDED_NOTES_FORMAT_REGEX.matches(it)) ""
+            else it.take(it.indexOf('.').takeIf { it != -1 } ?: 30) } ?: ""
         val phoneNumber = mobilePhoneNumber.ifEmpty { childPhoneNumber.ifEmpty { parentPhoneNumber }}
         val childLabel = ChildLabel(formattedDateTime, child.checkinCounter!!,
-            childName, phoneNumber, child.checkinCode!!, "$parentName - $parent2Name")
+            childName, phoneNumber, child.checkinCode!!, "$parentName - $parent2Name", childNotes)
         bluetoothPrintService.printLabel(childLabel)
     }
 
@@ -209,7 +214,7 @@ class CheckinService(private val context: Context) {
         val (parentName, parent2Name, phoneNumber) = getParentInfo(parentPersons)
         val childName = "${guest.firstName} ${guest.lastName}"
         val childLabel = ChildLabel(formattedDateTime, guest.checkinCounter,
-            childName, phoneNumber, guest.checkinCode, "$parentName - $parent2Name")
+            childName, phoneNumber, guest.checkinCode, "$parentName - $parent2Name", "")
         bluetoothPrintService.printLabel(childLabel)
     }
 
@@ -229,7 +234,7 @@ class CheckinService(private val context: Context) {
         bluetoothPrintService.printLabel(guestLabel)    // For greeter to keep
         guest.children.forEach {
             val childLabel = ChildLabel(guest.checkinDateTime, (checkinCounter++).toString(),
-                it.fullName(), guest.phoneNumber, guest.checkinCode, parentName)
+                it.fullName(), guest.phoneNumber, guest.checkinCode, parentName, "")
             bluetoothPrintService.printLabel(childLabel)
         }
         bluetoothPrintService.printLabel(parentLabel)

@@ -40,7 +40,7 @@ class ParentLabel(
             TEXT 50,380,"1",90,2,2,"$parentName1"
             TEXT 100,380,"1",90,2,2,"$parentName2"
             TEXT 200,380,"2",90,3,3,"$checkinCode"
-            TEXT 350,380,"1",90,2,2,"$dateTime",            
+            TEXT 350,380,"1",90,2,2,"$dateTime",
             PRINT 1
             END
         """.trimIndent()
@@ -53,7 +53,8 @@ class ChildLabel(
     private val childName: String,
     private val parentPhone: String,
     private val checkinCode: String,
-    private val parentNames: String
+    private val parentNames: String,
+    private val notes: String
 ) : BaseLabel() {
     override fun asTSPLCommand(): String {
         return """
@@ -65,6 +66,7 @@ class ChildLabel(
             TEXT 200,800,"2",90,3,3,"$childName"
             TEXT 275,800,"1",90,2,2,"$parentPhone"
             TEXT 350,800,"1",90,2,2,"$parentNames"
+            TEXT 400,800,"1",90,2,2,"$notes"
             TEXT 400,150,"2",90,2,2,"$checkinCode"
             PRINT 1
             END
@@ -140,10 +142,10 @@ class ReferenceLabel(
             CLS
             TEXT 50,80,"1",90,1,1,"50,80,1"
             TEXT 120,140,"1",90,1,1,"120,140,1"
-            TEXT 200,200,"2",90,1,1,"X |      Y <"            
+            TEXT 200,200,"2",90,1,1,"X |      Y <"
             TEXT 250,250,"2",90,2,2,"250,250,2"
             TEXT 350,600,"2",90,2,2,"350,600,2",
-            TEXT 440,810,"1",90,1,1,"440,810,1",            
+            TEXT 440,810,"1",90,1,1,"440,810,1",
             PRINT 1
             END
         """.trimIndent()
