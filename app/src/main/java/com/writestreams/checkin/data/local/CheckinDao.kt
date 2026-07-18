@@ -16,6 +16,9 @@ interface CheckinDao {
     @Query("SELECT * FROM checkins WHERE breezeSyncDateTime IS NULL")
     fun getAllPending(): List<Checkin>
 
+    @Query("SELECT COUNT(*) FROM checkins WHERE breezeSyncDateTime IS NULL")
+    fun countPending(): Int
+
     @Query("SELECT * FROM checkins WHERE personId = :personId AND instanceId = :instanceId")
     fun get(personId: String, instanceId: String): Checkin?
 

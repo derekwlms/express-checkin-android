@@ -142,6 +142,30 @@ class Repository(private val context: Context) {
         }
     }
 
+    suspend fun getCheckinsForInstance(instanceId: String): List<Checkin> {
+        return withContext(Dispatchers.IO) {
+            checkinDao.getForInstance(instanceId)
+        }
+    }
+
+    suspend fun getAllPersonIds(): Set<String> {
+        return withContext(Dispatchers.IO) {
+            personDao.getAllPersonIds().toSet()
+        }
+    }
+
+    suspend fun countPendingPushes(): Int {
+        return withContext(Dispatchers.IO) {
+            checkinDao.countPending() + personDao.countPendingNewPersons()
+        }
+    }
+
+    suspend fun deleteCheckin(personId: String, instanceId: String) {
+        withContext(Dispatchers.IO) {
+            checkinDao.delete(personId, instanceId)
+        }
+    }
+
     suspend fun checkIn(checkin: Checkin) {
         withContext(Dispatchers.IO) {
             checkinDao.upsert(checkin)

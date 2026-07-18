@@ -14,6 +14,7 @@ import com.writestreams.checkin.databinding.ActivityMainBinding
 import com.writestreams.checkin.util.AttendanceEmailScheduler
 import com.writestreams.checkin.service.CheckinService
 import com.writestreams.checkin.service.SettingsService
+import com.writestreams.checkin.service.SyncEngine
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,14 +64,20 @@ class MainActivity : AppCompatActivity() {
                         "Found ${cachedPersons.size} persons", Toast.LENGTH_SHORT).show()
                     Log.i("MainActivity", "Found ${cachedPersons.size} cached persons")
                 }
-                if (cachedPersons.size < 10) {
-                    repository.fetchAndCachePersons()
-                }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Log.e("MainActivity", "Error fetching and caching persons", e)
-                }
+                Log.e("MainActivity", "Error reading cached persons", e)
             }
         }
+    }
+
+    // The sync engine runs while the app is visible; its first cycle pulls the full people list
+    override fun onStart() {
+        super.onStart()
+        SyncEngine.getInstance(applicationContext).start()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        SyncEngine.getInstance(applicationContext).stop()
     }
 }
