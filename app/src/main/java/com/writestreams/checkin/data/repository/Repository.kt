@@ -1,14 +1,18 @@
 package com.writestreams.checkin.data.repository
 
 import android.content.Context
-import androidx.room.Room
 import com.writestreams.checkin.data.local.AppDatabase
+import com.writestreams.checkin.data.local.Checkin
+import com.writestreams.checkin.data.local.CheckinDao
 import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.data.local.PersonDao
 import com.writestreams.checkin.data.network.BreezeChmsApiService
+import com.writestreams.checkin.service.SettingsService
 import com.writestreams.checkin.util.ApiKeys.BREEZE_API_URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -21,9 +25,16 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-class Repository(context: Context) {
+class Repository(private val context: Context) {
     private val apiService: BreezeChmsApiService
     private val personDao: PersonDao
+    private val checkinDao: CheckinDao
+
+    companion object {
+        // Guards the read-max-then-insert sequence for check-in counters
+        // across all Repository instances.
+        private val checkinCounterMutex = Mutex()
+    }
 
     init {
         val client = OkHttpClient.Builder()
@@ -42,7 +53,11 @@ class Repository(context: Context) {
 
         val db = AppDatabase.getDatabase(context)
         personDao = db.personDao()
+        checkinDao = db.checkinDao()
     }
+
+    private fun currentInstanceId(): String =
+        SettingsService.currentBreezeInstanceId(context)
 
     suspend fun fetchAndCachePersons() {
         val persons = withContext(Dispatchers.IO) {
@@ -74,7 +89,7 @@ class Repository(context: Context) {
 
     suspend fun resetAllCheckins() {
         return withContext(Dispatchers.IO) {
-            personDao.resetAllCheckins()
+            checkinDao.deleteAll()
         }
     }
 
@@ -92,19 +107,76 @@ class Repository(context: Context) {
 
     suspend fun getCheckedInPersons(): List<Person> {
         return withContext(Dispatchers.IO) {
-            personDao.getCheckedInPersons()
+            attachPersons(checkinDao.getForInstance(currentInstanceId()))
         }
     }
 
     suspend fun getPendingCheckedInPersons(): List<Person> {
         return withContext(Dispatchers.IO) {
-            personDao.getPendingCheckedInPersons()
+            attachPersons(checkinDao.getPendingForInstance(currentInstanceId()))
+        }
+    }
+
+    // Join checkin rows to their persons, carrying check-in state on the
+    // transient Person fields for display.
+    private fun attachPersons(checkins: List<Checkin>): List<Person> {
+        return checkins.mapNotNull { checkin ->
+            personDao.getPersonById(checkin.personId)?.also {
+                it.checkinDateTime = checkin.checkinDateTime
+                it.checkinCode = checkin.checkinCode
+                it.checkinCounter = checkin.checkinCounter
+                it.breezeSyncDateTime = checkin.breezeSyncDateTime
+            }
         }
     }
 
     suspend fun getPendingNewPersons(): List<Person> {
         return withContext(Dispatchers.IO) {
             personDao.getPendingNewPersons()
+        }
+    }
+
+    suspend fun getAllPendingCheckins(): List<Checkin> {
+        return withContext(Dispatchers.IO) {
+            checkinDao.getAllPending()
+        }
+    }
+
+    suspend fun checkIn(checkin: Checkin) {
+        withContext(Dispatchers.IO) {
+            checkinDao.upsert(checkin)
+        }
+    }
+
+    suspend fun checkOut(personId: String) {
+        withContext(Dispatchers.IO) {
+            checkinDao.delete(personId, currentInstanceId())
+        }
+    }
+
+    suspend fun nextCheckinCounter(): String {
+        return checkinCounterMutex.withLock {
+            withContext(Dispatchers.IO) {
+                ((checkinDao.getMaxCheckinCounter() ?: 0) + 1).toString()
+            }
+        }
+    }
+
+    suspend fun setCheckedInWithBreeze(personId: String, instanceId: String, breezeSyncDateTime: LocalDateTime) {
+        withContext(Dispatchers.IO) {
+            checkinDao.setSynced(personId, instanceId, breezeSyncDateTime)
+        }
+    }
+
+    suspend fun remapPersonCheckins(oldPersonId: String, newPersonId: String) {
+        withContext(Dispatchers.IO) {
+            checkinDao.remapPersonId(oldPersonId, newPersonId)
+        }
+    }
+
+    suspend fun purgeSyncedCheckinsFromOtherInstances(instanceId: String) {
+        withContext(Dispatchers.IO) {
+            checkinDao.purgeSyncedFromOtherInstances(instanceId)
         }
     }
 
@@ -135,12 +207,7 @@ class Repository(context: Context) {
     suspend fun deleteAllPersons() {
         withContext(Dispatchers.IO) {
             personDao.deleteAll()
-        }
-    }
-
-    suspend fun setCheckedInWithBreeze(personId: String, checkedInDateTime: LocalDateTime) {
-        withContext(Dispatchers.IO) {
-            personDao.setCheckedInWithBreeze(personId, checkedInDateTime)
+            checkinDao.deleteAll()
         }
     }
 }

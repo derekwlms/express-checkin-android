@@ -12,6 +12,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.ActivityMainBinding
 import com.writestreams.checkin.util.AttendanceEmailScheduler
+import com.writestreams.checkin.service.CheckinService
 import com.writestreams.checkin.service.SettingsService
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
@@ -45,9 +46,16 @@ class MainActivity : AppCompatActivity() {
         AttendanceEmailScheduler.scheduleWeeklyEmail(applicationContext)
 
         val settingsService = SettingsService(applicationContext)
-        settingsService.updateBreezeInstanceId(LocalDate.now())
+        val currentInstanceId = settingsService.updateBreezeInstanceId(LocalDate.now())
 
         CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Weekly rollover: push any check-ins/persons still pending from past
+                // weeks (to their own event instances), then purge those old rows.
+                CheckinService(applicationContext).rolloverCheckins(currentInstanceId)
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error rolling over checkins", e)
+            }
             try {
                 val cachedPersons = repository.getCachedPersons()
                 withContext(Dispatchers.Main) {

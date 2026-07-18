@@ -18,17 +18,30 @@ class SettingsService(private val context: Context) {
             "Printer D" to "66:32:AF:39:15:16",   // 078
             "Printer E" to "10:23:81:47:79:F7"    // D450
         )
+
+        fun computeBreezeInstanceId(date: LocalDate): String {
+            val weeksFromStartDate = ChronoUnit.WEEKS.between(BREEZE_INSTANCE_ID_START_DATE, date).toInt()
+            return (BREEZE_INSTANCE_ID_START + (2 * weeksFromStartDate)).toString()
+        }
+
+        // The single source for "which event instance is current" - preferring the
+        // stored value (which the Settings date picker can override) over today's.
+        fun currentBreezeInstanceId(context: Context): String {
+            val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            return sharedPreferences.getString("breeze_instance_id", null)
+                ?: computeBreezeInstanceId(LocalDate.now())
+        }
     }
 
-    fun updateBreezeInstanceId(date: LocalDate) {
+    fun updateBreezeInstanceId(date: LocalDate): String {
         val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        val weeksFromStartDate = ChronoUnit.WEEKS.between(BREEZE_INSTANCE_ID_START_DATE, date).toInt()
-        val breezeInstanceId = (BREEZE_INSTANCE_ID_START + (2 * weeksFromStartDate)).toString()
+        val breezeInstanceId = computeBreezeInstanceId(date)
         Log.d("SettingsService", "Updating Breeze instance ID to $breezeInstanceId for date date: $date")
         with(sharedPreferences.edit()) {
             putString("breeze_instance_id", breezeInstanceId)
             apply()
         }
+        return breezeInstanceId
     }
 
     fun getBreezeInstanceId(): String? {

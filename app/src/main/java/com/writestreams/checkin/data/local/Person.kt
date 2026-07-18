@@ -1,11 +1,15 @@
 package com.writestreams.checkin.data.local
 
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.google.gson.annotations.SerializedName
 import java.time.LocalDateTime
 
+// The persons table is a pure mirror of Breeze directory data.
+// Check-in state lives in the checkins table (see Checkin); the @Ignore fields
+// below are transient display state populated from that table when needed.
 @Entity(tableName = "persons")
 @TypeConverters(Converters::class)
 data class Person(
@@ -19,12 +23,13 @@ data class Person(
     val path: String,
     val details: PersonDetails,
     val family: List<FamilyMember>,
-    var checkinDateTime: LocalDateTime?,
-    var checkinCode: String? = "",
-    var checkinCounter: String? = "",
-    var breezeSyncDateTime: LocalDateTime? = null,
     var tags: String? = ""
 ) {
+    @Ignore var checkinDateTime: LocalDateTime? = null
+    @Ignore var checkinCode: String? = ""
+    @Ignore var checkinCounter: String? = ""
+    @Ignore var breezeSyncDateTime: LocalDateTime? = null
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

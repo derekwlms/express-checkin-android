@@ -114,7 +114,6 @@ class AttendanceService(private val context: Context) {
     }
 
     private fun getBreezeInstanceId(): String {
-        val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        return sharedPreferences.getString("breeze_instance_id", "210398284") ?: "210398284"
+        return SettingsService.currentBreezeInstanceId(context)
     }
 }
