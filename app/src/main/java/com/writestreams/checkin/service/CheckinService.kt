@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import com.google.gson.Gson
+import com.writestreams.checkin.data.local.Checkin
 import com.writestreams.checkin.data.local.FamilyMember
 import com.writestreams.checkin.data.local.Guest
 import com.writestreams.checkin.data.local.GuestChild
@@ -44,7 +45,6 @@ class CheckinService(private val context: Context) {
         const val FAMILY_ROLE_CHILD = "2"
         const val FAMILY_ROLE_HEAD_OF_HOUSEHOLD = "4"
         const val OFFLINE_BREEZE_ID_PREFIX = "OL_"
-        var checkinCounter = 0
     }
 
     init {
@@ -86,12 +86,12 @@ class CheckinService(private val context: Context) {
             for (member in checkedFamilyMembers) {
                 val childPerson = repository.getPersonById(member.person_id)
                 childPerson?.let {
-                    it.checkinDateTime = currentDateTime
-                    it.checkinCode = checkinCode
-                    it.checkinCounter = (++checkinCounter).toString()
-                    repository.updatePerson(it)
-                    printChildLabel(it, parentPersons, formattedDateTime, mobilePhoneNumber)
-                    checkInWithBreeze(it.id, currentDateTime, breezeInstanceId)
+                    val counter = repository.nextCheckinCounter()
+                    repository.checkIn(Checkin(it.id, breezeInstanceId, currentDateTime, checkinCode, counter))
+                    printChildLabel(it, parentPersons, formattedDateTime, mobilePhoneNumber, checkinCode, counter)
+                    if (checkInWithBreeze(it.id, breezeInstanceId)) {
+                        repository.setCheckedInWithBreeze(it.id, breezeInstanceId, LocalDateTime.now())
+                    }
                 }
             }
             for (guestChild in newChildren) {
@@ -99,11 +99,15 @@ class CheckinService(private val context: Context) {
                 guest.let {
                     it.checkinDateTime = formattedDateTime
                     it.checkinCode = checkinCode
-                    it.checkinCounter = (++checkinCounter).toString()
+                    it.checkinCounter = repository.nextCheckinCounter()
                     printGuestChildLabel(it, parentPersons, formattedDateTime)
-                    addNewChildToBreeze(it, parentPersons.first()!!)
-                    emailGuestInfo(guest, parentPersons.firstOrNull())
-                    addNewChildToRepository(it, parentPersons.firstOrNull())
+                    val primaryParent = parentPersons.firstOrNull()
+                    if (primaryParent != null) {
+                        addNewChildToBreeze(it, primaryParent)
+                    }
+                    emailGuestInfo(guest, primaryParent)
+                    addNewChildToRepository(it, primaryParent)
+                    recordLocalCheckin(it.breezeId, breezeInstanceId, currentDateTime, checkinCode, it.checkinCounter)
                 }
             }
             printParentLabel(parentPersons, checkinCode, formattedDateTime)
@@ -112,10 +116,7 @@ class CheckinService(private val context: Context) {
 
     fun checkOutPerson(person: Person) {
         CoroutineScope(Dispatchers.IO).launch {
-            person.checkinDateTime = null
-            person.checkinCode = null
-            person.checkinCounter = null
-            repository.updatePerson(person)
+            repository.checkOut(person.id)
             checkOutWithBreeze(person, getBreezeInstanceId())
         }
     }
@@ -123,14 +124,34 @@ class CheckinService(private val context: Context) {
     fun checkInGuest(guest: Guest) {
         Log.d("checkinGuest:", guest.toString())
         CoroutineScope(Dispatchers.IO).launch {
-            guest.checkinDateTime = dateTimeFormatter.format(LocalDateTime.now())
+            val currentDateTime = LocalDateTime.now()
+            val breezeInstanceId = getBreezeInstanceId()
+            guest.checkinDateTime = dateTimeFormatter.format(currentDateTime)
             guest.checkinCode = Random.nextInt(1000, 9999).toString()
-            guest.checkinCounter = (++checkinCounter).toString()
-            printGuestLabels(guest)
+            printGuestLabels(guest)     // assigns each child's checkinCounter
             emailGuestInfo(guest)
             addGuestToBreeze(guest)
             addGuestToRepository(guest)
+            for (guestChild in guest.children) {
+                recordLocalCheckin(guestChild.breezeId, breezeInstanceId, currentDateTime,
+                    guest.checkinCode, guestChild.checkinCounter)
+            }
         }
+    }
+
+    // Writes the local check-in row for a person whose id is now final (either a
+    // Breeze id or an assigned OL_ offline id), marking it synced only after a
+    // confirmed Breeze check-in.
+    private suspend fun recordLocalCheckin(personId: String?, instanceId: String,
+                                           checkinDateTime: LocalDateTime,
+                                           checkinCode: String?, checkinCounter: String?) {
+        if (personId.isNullOrEmpty()) {
+            Log.w("recordLocalCheckin", "No person id assigned; skipping local check-in row")
+            return
+        }
+        val synced = !personId.startsWith(OFFLINE_BREEZE_ID_PREFIX) && checkInWithBreeze(personId, instanceId)
+        repository.checkIn(Checkin(personId, instanceId, checkinDateTime, checkinCode, checkinCounter,
+            if (synced) LocalDateTime.now() else null))
     }
 
     fun sendLocalDataToBreeze() {
@@ -153,12 +174,18 @@ class CheckinService(private val context: Context) {
 
     suspend fun sendPendingCheckinsToBreeze(): String {
         return try {
-            val pendingCheckinPersons = repository.getPendingCheckedInPersons()
-            val breezeInstanceId = getBreezeInstanceId()
-            pendingCheckinPersons.forEach { person ->
-                checkInWithBreeze(person.id, LocalDateTime.now(), breezeInstanceId)
+            // Pending rows from past instances are included: each is pushed to its
+            // own stored instance id, so late syncs land on the correct event.
+            val pendingCheckins = repository.getAllPendingCheckins()
+                .filterNot { it.personId.startsWith(OFFLINE_BREEZE_ID_PREFIX) }
+            var sentCount = 0
+            pendingCheckins.forEach { checkin ->
+                if (checkInWithBreeze(checkin.personId, checkin.instanceId)) {
+                    repository.setCheckedInWithBreeze(checkin.personId, checkin.instanceId, LocalDateTime.now())
+                    sentCount++
+                }
             }
-            "${pendingCheckinPersons.count()} check-ins"
+            "$sentCount of ${pendingCheckins.count()} check-ins"
         } catch (e: Exception) {
             Log.e("CheckinService.sendLocalDataToBreeze",
                     "Exception sending checked-in persons, probably offline", e)
@@ -169,19 +196,39 @@ class CheckinService(private val context: Context) {
     suspend fun sendPendingNewPersonsToBreeze(): String {
         return try {
             val pendingNewPersons = repository.getPendingNewPersons()
+            var sentCount = 0
             pendingNewPersons.forEach { person ->
+                val offlineId = person.id
                 val guest = person.asGuest()
                 Log.i("sendPendingNewPersonsToBreeze", "adding $person, $guest")
                 addGuestToBreeze(guest)
-                repository.deletePerson(person)
-                addGuestToRepository(guest)
+                val breezeId = guest.breezeId
+                // Only replace the local OL_ person once Breeze has assigned a real id;
+                // otherwise keep the offline person queued for the next sync.
+                if (breezeId.isNotEmpty() && !breezeId.startsWith(OFFLINE_BREEZE_ID_PREFIX)) {
+                    repository.deletePerson(person)
+                    addGuestToRepository(guest)
+                    repository.remapPersonCheckins(offlineId, breezeId)
+                    sentCount++
+                }
             }
-            "${pendingNewPersons.count()} additions, "
+            "$sentCount of ${pendingNewPersons.count()} additions, "
         } catch (e: Exception) {
             Log.e("CheckinService.sendPendingNewPersonsToBreeze",
                     "Exception sending pending new persons, probably offline", e)
             "Unable to send additions, probably offline"
         }
+    }
+
+    // Weekly rollover, run at launch: push anything still pending (to its stored
+    // instance), then purge synced rows from past instances. Pending rows that
+    // could not be pushed are kept for a later attempt.
+    suspend fun rolloverCheckins(currentInstanceId: String) {
+        if (isBreezeAccessible()) {
+            sendPendingNewPersonsToBreeze()
+            sendPendingCheckinsToBreeze()
+        }
+        repository.purgeSyncedCheckinsFromOtherInstances(currentInstanceId)
     }
 
     suspend fun getPhoneNumbers(person: Person): List<String> {
@@ -196,7 +243,8 @@ class CheckinService(private val context: Context) {
     }
 
     private suspend fun printChildLabel(child: Person, parentPersons: List<Person?>,
-                                        formattedDateTime: String, mobilePhoneNumber: String) {
+                                        formattedDateTime: String, mobilePhoneNumber: String,
+                                        checkinCode: String, checkinCounter: String) {
         val (parentName, parent2Name, parentPhoneNumber) = getParentInfo(parentPersons)
         val childName = "${child.first_name} ${child.last_name}"
         val childPhoneNumber = child.details?.phoneDetails?.firstOrNull {
@@ -205,8 +253,8 @@ class CheckinService(private val context: Context) {
             if (EXCLUDED_NOTES_FORMAT_REGEX.matches(it)) ""
             else it.take(it.indexOf('.').takeIf { it != -1 } ?: 30) } ?: ""
         val phoneNumber = mobilePhoneNumber.ifEmpty { childPhoneNumber.ifEmpty { parentPhoneNumber }}
-        val childLabel = ChildLabel(formattedDateTime, child.checkinCounter!!,
-            childName, phoneNumber, child.checkinCode!!, "$parentName - $parent2Name", childNotes)
+        val childLabel = ChildLabel(formattedDateTime, checkinCounter,
+            childName, phoneNumber, checkinCode, "$parentName - $parent2Name", childNotes)
         bluetoothPrintService.printLabel(childLabel)
     }
 
@@ -233,21 +281,28 @@ class CheckinService(private val context: Context) {
             parentName, guest.phoneNumber, guest.emailAddress, childNames)
         bluetoothPrintService.printLabel(guestLabel)    // For greeter to keep
         guest.children.forEach {
-            val childLabel = ChildLabel(guest.checkinDateTime, (checkinCounter++).toString(),
+            it.checkinCounter = repository.nextCheckinCounter()
+            val childLabel = ChildLabel(guest.checkinDateTime, it.checkinCounter,
                 it.fullName(), guest.phoneNumber, guest.checkinCode, parentName, "")
             bluetoothPrintService.printLabel(childLabel)
         }
         bluetoothPrintService.printLabel(parentLabel)
     }
 
-    private suspend fun checkInWithBreeze(childId: String, currentDateTime: LocalDateTime, breezeInstanceId: String) {
-        Log.d("checkinFamily", "Checked in child: $childId at $currentDateTime")
-        try {
-            apiService.checkIn(childId, breezeInstanceId)
-            repository.setCheckedInWithBreeze(childId, currentDateTime)
+    // Pure Breeze call; the local checkins table is updated by callers based on
+    // the returned success so a failed API call is never marked as synced.
+    private suspend fun checkInWithBreeze(personId: String, breezeInstanceId: String): Boolean {
+        return try {
+            val response = apiService.checkIn(personId, breezeInstanceId)
+            if (!response.isSuccessful) {
+                Log.e("checkInWithBreeze",
+                    "checkIn API returned ${response.code()} for person id $personId")
+            }
+            response.isSuccessful
         } catch (e: Exception) {
             Log.e("checkInWithBreeze",
-                "Exception calling checkIn API for child id $childId", e)
+                "Exception calling checkIn API for person id $personId", e)
+            false
         }
     }
 
@@ -273,8 +328,7 @@ class CheckinService(private val context: Context) {
     }
 
     private fun getBreezeInstanceId(): String {
-        val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        return sharedPreferences.getString("breeze_instance_id", "210398284") ?: "210398284"
+        return SettingsService.currentBreezeInstanceId(context)
     }
 
     private fun emailGuestInfo(guest: Guest, parent: Person? = null) {
@@ -324,11 +378,13 @@ class CheckinService(private val context: Context) {
         } catch (e: Exception) {
             Log.e("addGuestToBreeze", "Exception calling addPerson for the parent", e)
         }
-        try {
-            val fieldsList = getBreezeFamilyRoleFields(parentBreezeId!!, FAMILY_ROLE_HEAD_OF_HOUSEHOLD)
-            apiService.updatePerson(parentBreezeId, Gson().toJson(fieldsList))
-        } catch (e: Exception) {
-            Log.e("addGuestToBreeze", "Exception calling updatePerson for the parent - family_role", e)
+        if (!parentBreezeId.isNullOrEmpty()) {
+            try {
+                val fieldsList = getBreezeFamilyRoleFields(parentBreezeId, FAMILY_ROLE_HEAD_OF_HOUSEHOLD)
+                apiService.updatePerson(parentBreezeId, Gson().toJson(fieldsList))
+            } catch (e: Exception) {
+                Log.e("addGuestToBreeze", "Exception calling updatePerson for the parent - family_role", e)
+            }
         }
         for (guestChild in guest.children) {
             Log.d("addGuestToBreeze - add child:", guestChild.toString())
@@ -346,14 +402,14 @@ class CheckinService(private val context: Context) {
                 Log.e("addGuestToBreeze - guestChild - apiService.addPerson",
                     "Exception calling add person for ${guestChild.firstName} ${guestChild.lastName}", e)
             }
-            try {
-                val fieldsList = getBreezeFamilyRoleFields(breezeId!!, FAMILY_ROLE_CHILD)
-                apiService.updatePerson(breezeId, Gson().toJson(fieldsList))
-            } catch (e: Exception) {
-                Log.e("addGuestToBreeze", "Exception calling updatePerson for the child ($breezeId) - family_role", e)
-            }
             if (breezeId != null) {
-                checkInWithBreeze(breezeId, LocalDateTime.now(), getBreezeInstanceId())
+                try {
+                    val fieldsList = getBreezeFamilyRoleFields(breezeId, FAMILY_ROLE_CHILD)
+                    apiService.updatePerson(breezeId, Gson().toJson(fieldsList))
+                } catch (e: Exception) {
+                    Log.e("addGuestToBreeze", "Exception calling updatePerson for the child ($breezeId) - family_role", e)
+                }
+                checkInWithBreeze(breezeId, getBreezeInstanceId())
             }
         }
         try {
@@ -398,11 +454,11 @@ class CheckinService(private val context: Context) {
             } catch (e: Exception) {
                 Log.e("addNewChildToBreeze", "Exception calling updatePerson for the child ($breezeId) - family_role", e)
             }
-            checkInWithBreeze(breezeId, LocalDateTime.now(), getBreezeInstanceId())
+            checkInWithBreeze(breezeId, getBreezeInstanceId())
         }
     }
 
-    private suspend fun isBreezeAccessible() : Boolean {
+    suspend fun isBreezeAccessible() : Boolean {
         return try {
             apiService.getProfileFields()
             true
@@ -432,7 +488,7 @@ class CheckinService(private val context: Context) {
                         if (breezeChild != null) {
                             repository.addPerson(breezeChild)
                             // Redundant check-in to work around Breeze delay on add
-                            checkInWithBreeze(guestChild.breezeId, LocalDateTime.now(), getBreezeInstanceId())
+                            checkInWithBreeze(guestChild.breezeId, getBreezeInstanceId())
                         }
                     }
                 }
@@ -455,8 +511,6 @@ class CheckinService(private val context: Context) {
                 guestChild.breezeId = "${OFFLINE_BREEZE_ID_PREFIX}${System.currentTimeMillis()}_${guestChild.firstName}"
             }
             repository.addPerson(guestChild.asPerson())
-            // Redundant check-in to work around Breeze delay on add
-            checkInWithBreeze(guestChild.breezeId, LocalDateTime.now(), getBreezeInstanceId())
         }
     }
 

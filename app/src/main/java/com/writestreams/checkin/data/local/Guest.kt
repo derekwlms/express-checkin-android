@@ -52,14 +52,15 @@ data class Guest(
                 notes = null
             ),
             family = emptyList(), // listOf(this.asFamilyMember()) + children.map { it.asFamilyMember() },
-            checkinDateTime = checkinLocalDateTime,
-            checkinCode = this.checkinCode,
-            checkinCounter = this.checkinCounter,
             force_first_name = "",
             nick_name = "",
             middle_name = "",
             maiden_name = "",
             path = ""
-        )
+        ).also {
+            it.checkinDateTime = checkinLocalDateTime
+            it.checkinCode = this.checkinCode
+            it.checkinCounter = this.checkinCounter
+        }
     }
 }

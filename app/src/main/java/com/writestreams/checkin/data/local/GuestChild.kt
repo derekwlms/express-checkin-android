@@ -8,7 +8,8 @@ data class GuestChild(
     val lastName: String,
     var dateOfBirth: LocalDate?,
     var specialNeeds: String = "",
-    var breezeId: String = ""
+    var breezeId: String = "",
+    var checkinCounter: String = ""
 ) {
     fun fullName(): String {
         return "$firstName $lastName"

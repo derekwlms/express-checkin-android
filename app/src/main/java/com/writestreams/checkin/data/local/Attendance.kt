@@ -20,9 +20,6 @@ data class Attendance(
             maiden_name = "",
             details = PersonDetails(person_id, emptyList(), emptyList(), null, null, null),
             family = emptyList(),
-            checkinDateTime = null,
-            checkinCode = "",
-            checkinCounter = "",
             path = ""
         )
     }
