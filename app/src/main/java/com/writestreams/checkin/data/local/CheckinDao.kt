@@ -3,12 +3,19 @@ package com.writestreams.checkin.data.local
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
+import kotlinx.coroutines.flow.Flow
 import java.time.LocalDateTime
 
 @Dao
 interface CheckinDao {
     @Query("SELECT * FROM checkins WHERE instanceId = :instanceId")
     fun getForInstance(instanceId: String): List<Checkin>
+
+    @Query("SELECT * FROM checkins WHERE instanceId = :instanceId")
+    fun observeForInstance(instanceId: String): Flow<List<Checkin>>
+
+    @Query("SELECT * FROM checkins WHERE instanceId = :instanceId AND breezeSyncDateTime IS NULL")
+    fun observePendingForInstance(instanceId: String): Flow<List<Checkin>>
 
     @Query("SELECT * FROM checkins WHERE instanceId = :instanceId AND breezeSyncDateTime IS NULL")
     fun getPendingForInstance(instanceId: String): List<Checkin>

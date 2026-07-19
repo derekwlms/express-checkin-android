@@ -15,8 +15,8 @@ android {
         applicationId = "com.writestreams.checkin"
         minSdk = 26
         targetSdk = 34
-        versionCode = 212   // major * 100 + minor * 10 + patch
-        versionName = "2.1.2"
+        versionCode = 213   // major * 100 + minor * 10 + patch
+        versionName = "2.1.3"
         buildConfigField("String", "BUILD_DATE", "\"${SimpleDateFormat("yyyy-MM-dd").format(Date())}\"")
 
 
@@ -59,6 +59,8 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("androidx.room:room-runtime:2.5.0")
+    implementation("androidx.room:room-ktx:2.5.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.work:work-runtime-ktx:2.8.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
