@@ -170,20 +170,51 @@ class CheckinService(private val context: Context) {
     suspend fun sendPendingNewPersonsToBreeze(): String {
         return try {
             val pendingNewPersons = repository.getPendingNewPersons()
+            if (pendingNewPersons.isEmpty()) {
+                return "0 additions, "
+            }
+            // Refresh the mirror first so match-before-create sees anyone added
+            // via the Breeze web app (or the other tablet) while we were offline.
+            try {
+                repository.fetchAndCachePersons()
+            } catch (e: Exception) {
+                Log.w("sendPendingNewPersonsToBreeze", "Could not refresh mirror before dedupe", e)
+            }
+            val candidates = repository.getCachedPersons()
             var sentCount = 0
             pendingNewPersons.forEach { person ->
                 val offlineId = person.id
-                val guest = person.asGuest()
-                Log.i("sendPendingNewPersonsToBreeze", "adding $person, $guest")
-                addGuestToBreeze(guest)
-                val breezeId = guest.breezeId
-                // Only replace the local OL_ person once Breeze has assigned a real id;
-                // otherwise keep the offline person queued for the next sync.
-                if (breezeId.isNotEmpty() && !breezeId.startsWith(OFFLINE_BREEZE_ID_PREFIX)) {
-                    repository.deletePerson(person)
-                    addGuestToRepository(guest)
-                    repository.remapPersonCheckins(offlineId, breezeId)
-                    sentCount++
+                when (val matchResult = PersonMatcher.findExistingPerson(
+                    person.first_name, person.last_name, person.details.birthdate, candidates)) {
+                    is PersonMatcher.Result.Match -> {
+                        // Already in Breeze - link instead of creating a duplicate
+                        Log.i("sendPendingNewPersonsToBreeze",
+                            "Linking offline person $offlineId to existing Breeze person ${matchResult.person.id}")
+                        repository.deletePerson(person)
+                        repository.remapPersonCheckins(offlineId, matchResult.person.id)
+                        sentCount++
+                    }
+                    is PersonMatcher.Result.Ambiguous -> {
+                        // Breeze has duplicates for this name+birthdate; don't guess.
+                        // The person stays pending and is retried next sync.
+                        Log.w("sendPendingNewPersonsToBreeze",
+                            "Ambiguous match for $offlineId (${person.fullName()}): " +
+                                    "candidates ${matchResult.candidates.map { it.id }} - leaving pending")
+                    }
+                    PersonMatcher.Result.NoMatch -> {
+                        val guest = person.asGuest()
+                        Log.i("sendPendingNewPersonsToBreeze", "adding $person, $guest")
+                        addGuestToBreeze(guest)
+                        val breezeId = guest.breezeId
+                        // Only replace the local OL_ person once Breeze has assigned a real id;
+                        // otherwise keep the offline person queued for the next sync.
+                        if (breezeId.isNotEmpty() && !breezeId.startsWith(OFFLINE_BREEZE_ID_PREFIX)) {
+                            repository.deletePerson(person)
+                            addGuestToRepository(guest)
+                            repository.remapPersonCheckins(offlineId, breezeId)
+                            sentCount++
+                        }
+                    }
                 }
             }
             "$sentCount of ${pendingNewPersons.count()} additions, "
