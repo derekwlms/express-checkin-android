@@ -15,8 +15,8 @@ android {
         applicationId = "com.writestreams.checkin"
         minSdk = 26
         targetSdk = 34
-        versionCode = 223   // major * 100 + minor * 10 + patch
-        versionName = "2.2.3"
+        versionCode = 224   // major * 100 + minor * 10 + patch
+        versionName = "2.2.4"
         buildConfigField("String", "BUILD_DATE", "\"${SimpleDateFormat("yyyy-MM-dd").format(Date())}\"")
 
 

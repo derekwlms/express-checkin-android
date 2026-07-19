@@ -14,10 +14,10 @@ import com.writestreams.checkin.data.network.MailgunService
 import com.writestreams.checkin.data.network.NetworkClients
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.util.ApiKeys
+import com.writestreams.checkin.util.AppScope
 import com.writestreams.checkin.util.ChildLabel
 import com.writestreams.checkin.util.GuestLabel
 import com.writestreams.checkin.util.ParentLabel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -53,7 +53,7 @@ class CheckinService(private val context: Context) {
         val formattedDateTime = dateTimeFormatter.format(currentDateTime)
         val checkinCode = settingsService.getTabletId() + Random.nextInt(1000, 9999)
         val breezeInstanceId = getBreezeInstanceId()
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScope.io.launch {
             val parentFamilyMembers =
                 existingFamilyMembers.filter { it.family_role_id != FAMILY_ROLE_CHILD }
             val parentPersons = parentFamilyMembers.map { repository.getPersonById(it.person_id) }
@@ -89,7 +89,7 @@ class CheckinService(private val context: Context) {
     }
 
     fun checkOutPerson(person: Person) {
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScope.io.launch {
             repository.checkOut(person.id)
             checkOutWithBreeze(person, getBreezeInstanceId())
         }
@@ -97,7 +97,7 @@ class CheckinService(private val context: Context) {
 
     fun checkInGuest(guest: Guest) {
         Log.d("checkinGuest:", guest.toString())
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScope.io.launch {
             val currentDateTime = LocalDateTime.now()
             val breezeInstanceId = getBreezeInstanceId()
             guest.checkinDateTime = dateTimeFormatter.format(currentDateTime)
@@ -129,7 +129,7 @@ class CheckinService(private val context: Context) {
     }
 
     fun sendLocalDataToBreeze() {
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScope.io.launch {
             var message = ""
             if (isBreezeAccessible()) {
                 message += sendPendingNewPersonsToBreeze()
@@ -341,7 +341,7 @@ class CheckinService(private val context: Context) {
         val credentials = Base64.getEncoder().encodeToString(ApiKeys.MAILGUN_API_KEY.toByteArray())
         val authorization = "Basic $credentials"
 
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScope.io.launch {
             try {
                 val response = mailgunService.sendEmail(
                     authorization,

@@ -1,28 +1,25 @@
 package com.writestreams.checkin.service
 
 import android.content.Context
-import androidx.work.Worker
+import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.util.ApiKeys.EMAIL_RECIPIENTS
-import kotlinx.coroutines.runBlocking
 
 class SendAttendanceEmailWorker(
     context: Context,
     workerParams: WorkerParameters
-) : Worker(context, workerParams) {
+) : CoroutineWorker(context, workerParams) {
 
     private val attendanceService = AttendanceService(context)
     private val repository = Repository(context)
 
-    override fun doWork(): Result {
+    override suspend fun doWork(): Result {
         return try {
-            runBlocking {
-                val personsList = repository.getCheckedInPersons()
-                val attendanceList = personsList.map { "${it.nameLastFirst()} - ${it.id} - ${it.getFormattedCheckinTime()}" }
-                val recipient = EMAIL_RECIPIENTS
-                attendanceService.emailAttendanceList(attendanceList, recipient)
-            }
+            val personsList = repository.getCheckedInPersons()
+            val attendanceList = personsList.map { "${it.nameLastFirst()} - ${it.id} - ${it.getFormattedCheckinTime()}" }
+            val recipient = EMAIL_RECIPIENTS
+            attendanceService.emailAttendanceList(attendanceList, recipient)
             Result.success()
         } catch (e: Exception) {
             Result.failure()
