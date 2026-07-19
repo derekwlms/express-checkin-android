@@ -11,10 +11,9 @@ import com.writestreams.checkin.data.local.GuestChild
 import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.data.network.BreezeChmsApiService
 import com.writestreams.checkin.data.network.MailgunService
+import com.writestreams.checkin.data.network.NetworkClients
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.util.ApiKeys
-import com.writestreams.checkin.util.ApiKeys.BREEZE_API_URL
-import com.writestreams.checkin.util.ApiKeys.MAILGUN_URL
 import com.writestreams.checkin.util.ChildLabel
 import com.writestreams.checkin.util.GuestLabel
 import com.writestreams.checkin.util.ParentLabel
@@ -22,21 +21,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Base64
-import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 class CheckinService(private val context: Context) {
 
     private val repository = Repository(context)
-    private val apiService: BreezeChmsApiService
+    private val apiService: BreezeChmsApiService = NetworkClients.breezeApiService
     private val bluetoothPrintService = BluetoothPrintService(context)
-    private val mailgunService: MailgunService
+    private val mailgunService: MailgunService = NetworkClients.mailgunService
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy (h:mm a)")
         // Do not print Breeze-automated notes on labels; exampLe:  "3042 - Fred & Wilma"
     private val EXCLUDED_NOTES_FORMAT_REGEX = """^\d{2,}\s*-\s*.+""".toRegex()
@@ -45,28 +40,6 @@ class CheckinService(private val context: Context) {
         const val FAMILY_ROLE_CHILD = "2"
         const val FAMILY_ROLE_HEAD_OF_HOUSEHOLD = "4"
         const val OFFLINE_BREEZE_ID_PREFIX = "OL_"
-    }
-
-    init {
-        val client = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .build()
-        val retrofit = Retrofit.Builder()
-            .client(client)
-            .baseUrl(BREEZE_API_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        apiService = retrofit.create(BreezeChmsApiService::class.java)
-
-        val mailClient = OkHttpClient.Builder().build()
-        val mailRetrofit = Retrofit.Builder()
-            .baseUrl(MAILGUN_URL)
-            .client(mailClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        mailgunService = mailRetrofit.create(MailgunService::class.java)
     }
 
     fun checkinFamily(

@@ -7,8 +7,8 @@ import com.writestreams.checkin.data.local.CheckinDao
 import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.data.local.PersonDao
 import com.writestreams.checkin.data.network.BreezeChmsApiService
+import com.writestreams.checkin.data.network.NetworkClients
 import com.writestreams.checkin.service.SettingsService
-import com.writestreams.checkin.util.ApiKeys.BREEZE_API_URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -17,19 +17,15 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.time.LocalDateTime
-import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class Repository(private val context: Context) {
-    private val apiService: BreezeChmsApiService
+    private val apiService: BreezeChmsApiService = NetworkClients.breezeApiService
     private val personDao: PersonDao
     private val checkinDao: CheckinDao
 
@@ -40,20 +36,6 @@ class Repository(private val context: Context) {
     }
 
     init {
-        val client = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .build()
-
-        val retrofit = Retrofit.Builder()
-            .client(client)
-            .baseUrl(BREEZE_API_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        apiService = retrofit.create(BreezeChmsApiService::class.java)
-
         val db = AppDatabase.getDatabase(context)
         personDao = db.personDao()
         checkinDao = db.checkinDao()

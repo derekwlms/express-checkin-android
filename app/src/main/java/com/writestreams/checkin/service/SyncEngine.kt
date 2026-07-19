@@ -6,8 +6,8 @@ import android.net.Network
 import android.util.Log
 import com.writestreams.checkin.data.local.Checkin
 import com.writestreams.checkin.data.network.BreezeChmsApiService
+import com.writestreams.checkin.data.network.NetworkClients
 import com.writestreams.checkin.data.repository.Repository
-import com.writestreams.checkin.util.ApiKeys.BREEZE_API_URL
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -18,12 +18,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.TimeUnit
 
 data class SyncStatus(
     val breezeReachable: Boolean? = null,   // null until the first probe completes
@@ -41,8 +37,8 @@ class SyncEngine private constructor(private val context: Context) {
 
     private val repository = Repository(context)
     private val checkinService = CheckinService(context)
-    private val apiService: BreezeChmsApiService
-    private val probeApiService: BreezeChmsApiService
+    private val apiService: BreezeChmsApiService = NetworkClients.breezeApiService
+    private val probeApiService: BreezeChmsApiService = NetworkClients.breezeProbeApiService
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val syncTrigger = Channel<Unit>(Channel.CONFLATED)
@@ -59,24 +55,6 @@ class SyncEngine private constructor(private val context: Context) {
             // Only a hint to try sooner - the Breeze probe stays the source of truth.
             requestSyncNow()
         }
-    }
-
-    init {
-        fun retrofitWithTimeout(timeoutSeconds: Long): BreezeChmsApiService {
-            val client = OkHttpClient.Builder()
-                .connectTimeout(timeoutSeconds, TimeUnit.SECONDS)
-                .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
-                .writeTimeout(timeoutSeconds, TimeUnit.SECONDS)
-                .build()
-            return Retrofit.Builder()
-                .client(client)
-                .baseUrl(BREEZE_API_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-                .create(BreezeChmsApiService::class.java)
-        }
-        apiService = retrofitWithTimeout(30)
-        probeApiService = retrofitWithTimeout(PROBE_TIMEOUT_SECONDS)
     }
 
     fun start() {
@@ -230,7 +208,7 @@ class SyncEngine private constructor(private val context: Context) {
         private const val FAST_POLL_MS = 60_000L            // attendance fast path
         private const val UNREACHABLE_POLL_MS = 600_000L    // polite backoff while blocked/offline
         private const val PEOPLE_SYNC_INTERVAL_MINUTES = 15L
-        private const val PROBE_TIMEOUT_SECONDS = 60L
+        // probe timeout lives in NetworkClients.PROBE_TIMEOUT_SECONDS
 
         private val BREEZE_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
