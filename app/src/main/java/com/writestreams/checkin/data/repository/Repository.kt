@@ -14,8 +14,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import retrofit2.Call
 import retrofit2.Callback
@@ -28,12 +26,6 @@ class Repository(private val context: Context) {
     private val apiService: BreezeChmsApiService = NetworkClients.breezeApiService
     private val personDao: PersonDao
     private val checkinDao: CheckinDao
-
-    companion object {
-        // Guards the read-max-then-insert sequence for check-in counters
-        // across all Repository instances
-        private val checkinCounterMutex = Mutex()
-    }
 
     init {
         val db = AppDatabase.getDatabase(context)
@@ -187,14 +179,6 @@ class Repository(private val context: Context) {
     suspend fun checkOut(personId: String) {
         withContext(Dispatchers.IO) {
             checkinDao.delete(personId, currentInstanceId())
-        }
-    }
-
-    suspend fun nextCheckinCounter(): String {
-        return checkinCounterMutex.withLock {
-            withContext(Dispatchers.IO) {
-                ((checkinDao.getMaxCheckinCounter() ?: 0) + 1).toString()
-            }
         }
     }
 

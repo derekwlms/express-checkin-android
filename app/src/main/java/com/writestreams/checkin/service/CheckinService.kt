@@ -29,6 +29,7 @@ import kotlin.random.Random
 class CheckinService(private val context: Context) {
 
     private val repository = Repository(context)
+    private val settingsService = SettingsService(context)
     private val apiService: BreezeChmsApiService = NetworkClients.breezeApiService
     private val bluetoothPrintService = BluetoothPrintService(context)
     private val mailgunService: MailgunService = NetworkClients.mailgunService
@@ -50,7 +51,7 @@ class CheckinService(private val context: Context) {
     ) {
         val currentDateTime = LocalDateTime.now()
         val formattedDateTime = dateTimeFormatter.format(currentDateTime)
-        val checkinCode = Random.nextInt(1000, 9999).toString()
+        val checkinCode = settingsService.getTabletId() + Random.nextInt(1000, 9999)
         val breezeInstanceId = getBreezeInstanceId()
         CoroutineScope(Dispatchers.IO).launch {
             val parentFamilyMembers =
@@ -59,7 +60,7 @@ class CheckinService(private val context: Context) {
             for (member in checkedFamilyMembers) {
                 val childPerson = repository.getPersonById(member.person_id)
                 childPerson?.let {
-                    val counter = repository.nextCheckinCounter()
+                    val counter = settingsService.nextCheckinCounter()
                     repository.checkIn(Checkin(it.id, breezeInstanceId, currentDateTime, checkinCode, counter))
                     printChildLabel(it, parentPersons, formattedDateTime, mobilePhoneNumber, checkinCode, counter)
                     if (checkInWithBreeze(it.id, breezeInstanceId)) {
@@ -72,7 +73,7 @@ class CheckinService(private val context: Context) {
                 guest.let {
                     it.checkinDateTime = formattedDateTime
                     it.checkinCode = checkinCode
-                    it.checkinCounter = repository.nextCheckinCounter()
+                    it.checkinCounter = settingsService.nextCheckinCounter()
                     printGuestChildLabel(it, parentPersons, formattedDateTime)
                     val primaryParent = parentPersons.firstOrNull()
                     if (primaryParent != null) {
@@ -100,7 +101,7 @@ class CheckinService(private val context: Context) {
             val currentDateTime = LocalDateTime.now()
             val breezeInstanceId = getBreezeInstanceId()
             guest.checkinDateTime = dateTimeFormatter.format(currentDateTime)
-            guest.checkinCode = Random.nextInt(1000, 9999).toString()
+            guest.checkinCode = settingsService.getTabletId() + Random.nextInt(1000, 9999)
             printGuestLabels(guest)     // assigns each child's checkinCounter
             emailGuestInfo(guest)
             addGuestToBreeze(guest)
@@ -254,7 +255,7 @@ class CheckinService(private val context: Context) {
             parentName, guest.phoneNumber, guest.emailAddress, childNames)
         bluetoothPrintService.printLabel(guestLabel)    // For greeter to keep
         guest.children.forEach {
-            it.checkinCounter = repository.nextCheckinCounter()
+            it.checkinCounter = settingsService.nextCheckinCounter()
             val childLabel = ChildLabel(guest.checkinDateTime, it.checkinCounter,
                 it.fullName(), guest.phoneNumber, guest.checkinCode, parentName, "")
             bluetoothPrintService.printLabel(childLabel)

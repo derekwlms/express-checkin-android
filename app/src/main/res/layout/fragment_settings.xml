@@ -57,6 +57,27 @@
                         android:textSize="24sp"
                         android:minHeight="32dp" />
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="8dp"
+                            android:text="Tablet ID (unique per tablet):" />
+
+                        <Spinner
+                            android:id="@+id/tabletIdSpinner"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:entries="@array/tablet_ids"
+                            android:minHeight="32dp" />
+                    </LinearLayout>
+
                     <EditText
                         android:id="@+id/labelTextEditText"
                         android:layout_width="match_parent"

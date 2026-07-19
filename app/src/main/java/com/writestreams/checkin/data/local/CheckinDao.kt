@@ -50,7 +50,4 @@ interface CheckinDao {
     // check-in rows move to the Breeze-assigned id.
     @Query("UPDATE checkins SET personId = :newPersonId WHERE personId = :oldPersonId")
     fun remapPersonId(oldPersonId: String, newPersonId: String)
-
-    @Query("SELECT MAX(CAST(checkinCounter AS INTEGER)) FROM checkins")
-    fun getMaxCheckinCounter(): Int?
 }

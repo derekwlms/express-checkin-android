@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import android.widget.Button
 import android.widget.DatePicker
 import android.widget.EditText
@@ -86,6 +87,8 @@ class SettingsFragment : Fragment() {
         labelTextEditText = view.findViewById(R.id.labelTextEditText)
         printButton = view.findViewById(R.id.printButton)
 
+        setupTabletIdSpinner(view)
+
         printButton.setOnClickListener {
             // Do we want checkBluetoothPermissions() here? - see 2/8/25 ~ 8:50 pm commit
             requestPermissions()
@@ -110,6 +113,18 @@ class SettingsFragment : Fragment() {
         val deleteAllPersonsButton: Button = view.findViewById(R.id.deleteAllPersonsButton)
         deleteAllPersonsButton.setOnClickListener {
             confirmThenDeleteAllPersons()
+        }
+    }
+
+    private fun setupTabletIdSpinner(view: View) {
+        val tabletIdSpinner: Spinner = view.findViewById(R.id.tabletIdSpinner)
+        val tabletIds = resources.getStringArray(R.array.tablet_ids)
+        tabletIdSpinner.setSelection(tabletIds.indexOf(settingsService.getTabletId()).coerceAtLeast(0))
+        tabletIdSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, v: View?, position: Int, id: Long) {
+                settingsService.updateTabletId(tabletIds[position])
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
     }
 
@@ -161,6 +176,7 @@ class SettingsFragment : Fragment() {
         lifecycleScope.launch {
             try {
                 repository.resetAllCheckins()
+                settingsService.resetCheckinCounter()
                 Toast.makeText(
                     requireContext(),
                     "All check-ins have been reset",

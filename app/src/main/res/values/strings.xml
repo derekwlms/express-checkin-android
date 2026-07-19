@@ -11,4 +11,10 @@
         <item>Printer C</item>
         <item>Printer D</item>
     </string-array>
+    <string-array name="tablet_ids">
+        <item>A</item>
+        <item>B</item>
+        <item>C</item>
+        <item>D</item>
+    </string-array>
 </resources>
