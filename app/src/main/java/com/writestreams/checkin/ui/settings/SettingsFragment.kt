@@ -24,7 +24,10 @@ import com.writestreams.checkin.BuildConfig
 import com.writestreams.checkin.R
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.FragmentSettingsBinding
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.writestreams.checkin.service.BluetoothPrintService
+import com.writestreams.checkin.service.RefreshPersonsWorker
 import com.writestreams.checkin.service.SettingsService
 import com.writestreams.checkin.util.Label
 import com.writestreams.checkin.util.ReferenceLabel
@@ -124,9 +127,10 @@ class SettingsFragment : Fragment() {
     private fun confirmThenFetchPersons() {
         AlertDialog.Builder(requireContext())
             .setTitle("Confirm Update")
-            .setMessage("Are you sure you want to update the local members database?")
+            .setMessage("Refresh the local members database from Breeze? " +
+                    "This runs in the background; check-ins are not affected.")
             .setPositiveButton("Yes") { _, _ ->
-                fetchAndCachePersons()
+                refreshPersonsInBackground()
             }
             .setNegativeButton("No", null)
             .show()
@@ -170,22 +174,33 @@ class SettingsFragment : Fragment() {
         }
     }
 
-    private fun fetchAndCachePersons() {
-        lifecycleScope.launch {
-            try {
-                repository.fetchAndCachePersons()
-                val cachedPersons = repository.getCachedPersons()
-                Toast.makeText(
-                    requireContext(),
-                    "Fetched ${cachedPersons.size} persons",
-                    Toast.LENGTH_SHORT
-                ).show()
-            } catch (e: Exception) {
-                Log.e("SettingsFragment", "Error fetching updates", e)
-                Toast.makeText(requireContext(), "Error fetching updates", Toast.LENGTH_SHORT)
-                    .show()
+    private var refreshRequested = false
+
+    private fun refreshPersonsInBackground() {
+        refreshRequested = true
+        RefreshPersonsWorker.enqueue(requireContext())
+        Toast.makeText(requireContext(), "Refreshing members in the background…",
+            Toast.LENGTH_SHORT).show()
+        WorkManager.getInstance(requireContext())
+            .getWorkInfosForUniqueWorkLiveData(RefreshPersonsWorker.WORK_NAME)
+            .observe(viewLifecycleOwner) { workInfos ->
+                if (!refreshRequested) return@observe
+                val workInfo = workInfos?.firstOrNull() ?: return@observe
+                when (workInfo.state) {
+                    WorkInfo.State.SUCCEEDED -> {
+                        refreshRequested = false
+                        val count = workInfo.outputData.getInt(RefreshPersonsWorker.KEY_COUNT, 0)
+                        Toast.makeText(requireContext(), "Refreshed $count members from Breeze",
+                            Toast.LENGTH_SHORT).show()
+                    }
+                    WorkInfo.State.FAILED -> {
+                        refreshRequested = false
+                        Toast.makeText(requireContext(),
+                            "Member refresh failed - is Breeze reachable?", Toast.LENGTH_SHORT).show()
+                    }
+                    else -> {}
+                }
             }
-        }
     }
 
     private fun deleteAllPersons() {

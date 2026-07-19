@@ -1,0 +1,8 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_breeze_status"
+        android:title="@string/breeze_status"
+        android:icon="@drawable/ic_cloud_off"
+        app:showAsAction="always" />
+</menu>

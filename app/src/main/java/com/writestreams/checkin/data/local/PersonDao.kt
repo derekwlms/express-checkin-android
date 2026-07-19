@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
 
@@ -33,6 +34,17 @@ interface PersonDao {
 
     @Query("DELETE FROM persons")
     fun deleteAll()
+
+    @Query("DELETE FROM persons WHERE id NOT LIKE 'OL_%'")
+    fun deleteAllSynced()
+
+    // Use @Transaction for an atomic fetch-then-swap
+    // Retains local persons created while offline (OL_ IDs)
+    @Transaction
+    fun replaceAllFromBreeze(persons: List<Person>) {
+        deleteAllSynced()
+        insertAll(persons)
+    }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun add(person: Person)

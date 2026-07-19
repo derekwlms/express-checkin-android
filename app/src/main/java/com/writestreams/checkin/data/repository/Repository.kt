@@ -10,6 +10,9 @@ import com.writestreams.checkin.data.network.BreezeChmsApiService
 import com.writestreams.checkin.service.SettingsService
 import com.writestreams.checkin.util.ApiKeys.BREEZE_API_URL
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -32,7 +35,7 @@ class Repository(private val context: Context) {
 
     companion object {
         // Guards the read-max-then-insert sequence for check-in counters
-        // across all Repository instances.
+        // across all Repository instances
         private val checkinCounterMutex = Mutex()
     }
 
@@ -59,8 +62,8 @@ class Repository(private val context: Context) {
     private fun currentInstanceId(): String =
         SettingsService.currentBreezeInstanceId(context)
 
-    suspend fun fetchAndCachePersons() {
-        val persons = withContext(Dispatchers.IO) {
+    private suspend fun fetchPersonsFromBreeze(): List<Person> {
+        return withContext(Dispatchers.IO) {
             suspendCancellableCoroutine<List<Person>> { continuation ->
                 apiService.getPersons().enqueue(object : Callback<List<Person>> {
                     override fun onResponse(
@@ -81,10 +84,23 @@ class Repository(private val context: Context) {
                 })
             }
         }
+    }
 
+    suspend fun fetchAndCachePersons() {
+        val persons = fetchPersonsFromBreeze()
         withContext(Dispatchers.IO) {
             personDao.insertAll(persons)
         }
+    }
+
+    // Full download first, then swap the mirror in one transaction
+    // so that interrupted fetch leaves the old data intact
+    suspend fun refreshAllPersonsFromBreeze(): Int {
+        val persons = fetchPersonsFromBreeze()
+        withContext(Dispatchers.IO) {
+            personDao.replaceAllFromBreeze(persons)
+        }
+        return persons.size
     }
 
     suspend fun resetAllCheckins() {
@@ -117,8 +133,22 @@ class Repository(private val context: Context) {
         }
     }
 
+    // Observable variants: Room re-emits whenever the checkins table changes,
+    // so screens update when the sync engine (or a check-in here) writes to the database
+    fun observeCheckedInPersons(): Flow<List<Person>> {
+        return checkinDao.observeForInstance(currentInstanceId())
+            .map { attachPersons(it) }
+            .flowOn(Dispatchers.IO)
+    }
+
+    fun observePendingCheckedInPersons(): Flow<List<Person>> {
+        return checkinDao.observePendingForInstance(currentInstanceId())
+            .map { attachPersons(it) }
+            .flowOn(Dispatchers.IO)
+    }
+
     // Join checkin rows to their persons, carrying check-in state on the
-    // transient Person fields for display.
+    // transient Person fields for display
     private fun attachPersons(checkins: List<Checkin>): List<Person> {
         return checkins.mapNotNull { checkin ->
             personDao.getPersonById(checkin.personId)?.also {

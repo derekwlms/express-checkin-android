@@ -4,6 +4,7 @@
     <string name="title_attendance">Attendance</string>
     <string name="title_settings">Settings</string>
     <string name="title_checkin_header">SGC Woodstock - Check In</string>
+    <string name="breeze_status">Breeze status</string>
     <string-array name="printer_names">
         <item>Printer A</item>
         <item>Printer B</item>
