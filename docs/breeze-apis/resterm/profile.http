@@ -17,3 +17,21 @@ GET {{breeze.url}}/api/profile
 # @tag profile read
 # @assert response.statusCode == 200
 GET {{breeze.url}}/api/tags/list_tags
+
+### List Tag Folders
+# @name ListTagFolders
+# @tag profile read
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/tags/list_folders
+
+### List Tags for Folder - Community Groups
+# @name ListTagsForFolderCG
+# @tag profile read
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/tags/list_tags?folder_id=624304
+
+### List Tags for Folder - Children's Ministry
+# @name ListTagsForFolderCM
+# @tag profile read
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/tags/list_tags?folder_id=624303
