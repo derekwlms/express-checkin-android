@@ -1,0 +1,35 @@
+# Breeze events - v1 event list and the v2 event-instances endpoint.
+
+# @auth file apikey header Api-Key {{breeze.apiKey}}
+
+### Events in a date range (v1)
+# @name ListEvents
+# @tag events read
+# @request start 2025-02-01
+# @request end 2025-02-05
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/events?start={{start}}&end={{end}}
+
+### Events for the last four weeks (v1)
+# @name RecentEvents
+# @tag events read
+# @request start {{= rts.time.formatUnix(rts.time.nowUnix() - 28 * 86400, "2006-01-02") }}
+# @request end {{= rts.time.format("2006-01-02") }}
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/events?start={{start}}&end={{end}}
+
+### Event instances by category (v2, bearer auth)
+# This one does not use the Api-Key header. It needs a v2 JWT in
+# BREEZE_V2_TOKEN - see README.md. The bracketed filter keys are sent
+# literally; the backslashes in the Postman export were shell escaping.
+# @name EventInstancesV2
+# @tag events v2 read
+# @auth bearer {{breeze.v2Token}}
+# @request categories 18707,16521,17678
+# @request from 2024-10-25
+# @request to 2024-12-07
+# @assert response.statusCode == 200
+GET {{breeze.v2Url}}/api/v2/event-instances?filter[start_datetime:gt:date]={{from}}&filter[start_datetime:lt:date]={{to}}&filter[category_id:contains:array]={{categories}}
+Accept: application/json, text/plain, */*
+Origin: https://sgcwoodstock.breezechms.com
+Referer: https://sgcwoodstock.breezechms.com/

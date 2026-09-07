@@ -1,0 +1,83 @@
+# Breeze people - profile reads and writes.
+#
+# Every write is a GET in the Breeze v1 API; that is the API's design, not a
+# mistake in the translation. Profile field ids ({{fields.*}}) live in
+# resterm.env.json and are specific to the SGC account.
+
+# @auth file apikey header Api-Key {{breeze.apiKey}}
+
+### All people, with profile details
+# @name ListPeople
+# @tag people read
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/people?details=1
+
+### One person
+# @name ShowPerson
+# @tag people read
+# @request personId 39900288
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/people/{{personId}}
+
+### Add a person
+# @name AddPerson
+# @tag people write
+# @request first Test
+# @request last Person6
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/people/add?first={{first}}&last={{last}}&fields_json=[{"field_id":"{{fields.birthdate}}","field_type":"birthdate","response":"1/1/2015"},{"field_id":"{{fields.email}}","field_type":"email","response":true,"details":{"address":"email@test6.com"}},{"field_id":"{{fields.phone}}","field_type":"phone","response":true,"details":{"phone_mobile":"111-111-1111"}}]
+
+### Update a person - email
+# @name UpdateEmail
+# @tag people write
+# @request personId 51854125
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/people/update?person_id={{personId}}&fields_json=[{"field_id":"{{fields.email}}","field_type":"email","response":true,"details":{"address":"zach.taylorrr@yahoo.com"}}]
+
+### Update a person - phone
+# @name UpdatePhone
+# @tag people write
+# @request personId 51854131
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/people/update?person_id={{personId}}&fields_json=[{"field_id":"{{fields.phone}}","field_type":"phone","response":true,"details":{"phone_mobile":"(770)%20624-4554"}}]
+
+### Update a person - birthdate
+# @name UpdateBirthdate
+# @tag people write
+# @request personId 51929004
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/people/update?person_id={{personId}}&fields_json=[{"field_id":"{{fields.birthdate}}","field_type":"birthdate","response":"8/10/2023"}]
+
+### Update a person - family role: head of household
+# @name UpdateFamilyRoleHead
+# @tag people family write
+# @request personId 51935724
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/people/update?person_id={{personId}}&fields_json=[{"field_id":"{{fields.familyRole}}","field_type":"family_role","response":4,"details":{"person_id":{{personId}},"role_id":4}}]
+
+### Update a person - family role: child
+# @name UpdateFamilyRoleChild
+# @tag people family write
+# @request personId 51935725
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/people/update?person_id={{personId}}&fields_json=[{"field_id":"{{fields.familyRole}}","field_type":"family_role","response":2,"details":{"person_id":{{personId}},"role_id":2}}]
+
+### Update a person - last name (does NOT work on the Breeze side)
+# @name UpdateLastName
+# @tag people write broken
+# @request personId 57696962
+GET {{breeze.url}}/api/people/update?person_id={{personId}}&fields_json=[{"field_id":"last_name","field_type":"name","response":"Gray"}]
+
+### Delete a person
+# @name DeletePerson
+# @tag people write destructive
+# @request personId 51853035
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/people/delete?person_id={{personId}}
+
+### Create a family from existing people
+# @name CreateFamily
+# @tag family write
+# @request peopleIds [51854125,51854131]
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/families/create?people_ids_json={{peopleIds}}

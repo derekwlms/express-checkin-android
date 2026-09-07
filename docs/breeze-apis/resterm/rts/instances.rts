@@ -1,0 +1,33 @@
+module instances
+
+# SGC's Sunday check-in event instances advance by 2 per week from
+# instance 210398276 on Sunday 2025-02-02 - the same arithmetic the
+# Android app uses in SettingsService.updateBreezeInstanceId().
+#
+# Ids are returned via rts.json.stringify: RTS numbers are floats, and
+# every other conversion (rts.str, rts.int, string concat) renders a value
+# this large into a URL as 2.10398442e+08.
+let anchorId = 210398276
+let anchorDate = "2025-02-02"
+let week = 604800
+
+fn idForUnix(ts) {
+  let anchor = rts.time.parse("2006-01-02", anchorDate)
+  let weeks = rts.math.floor((ts - anchor) / week)
+  return rts.json.stringify(rts.int(anchorId + (2 * weeks)))
+}
+
+# Instance id for the Sunday of the current week.
+export fn current() {
+  return idForUnix(rts.time.nowUnix())
+}
+
+# Instance id n weeks back (1 = last Sunday's service).
+export fn weeksAgo(n) {
+  return idForUnix(rts.time.nowUnix() - (n * week))
+}
+
+# Instance id for a specific Sunday, written as "2026-09-06".
+export fn forSunday(date) {
+  return idForUnix(rts.time.parse("2006-01-02", date))
+}

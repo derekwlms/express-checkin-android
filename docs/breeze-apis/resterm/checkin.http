@@ -1,0 +1,45 @@
+# Breeze check-in - attendance for a Sunday event instance.
+#
+# {{instanceId}} is computed for the current Sunday by rts/instances.rts,
+# so these requests do not go stale the way the Postman collection did.
+
+# @use ./rts/instances.rts
+# @auth file apikey header Api-Key {{breeze.apiKey}}
+# @file instanceId {{= instances.current() }}
+## To work against a fixed week instead, replace the line above with one of:
+##   @file instanceId {{= instances.weeksAgo(1) }}
+##   @file instanceId {{= instances.forSunday("2026-09-06") }}
+##   @file instanceId 210398442
+
+### People eligible to check in to this instance
+# @name EligiblePeople
+# @tag checkin read
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/events/attendance/eligible?instance_id={{instanceId}}
+
+### Attendance already recorded for this instance
+# @name AttendanceList
+# @tag checkin read
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/events/attendance/list?instance_id={{instanceId}}&details=true
+
+### Check a person IN
+# @name CheckIn
+# @tag checkin write
+# @request personId 12990277
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/events/attendance/add?person_id={{personId}}&instance_id={{instanceId}}&direction=in
+
+### Check a person OUT
+# @name CheckOut
+# @tag checkin write
+# @request personId 12990277
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/events/attendance/add?person_id={{personId}}&instance_id={{instanceId}}&direction=out
+
+### Attendance for a previous week (helper demo)
+# @name AttendanceLastWeek
+# @tag checkin read
+# @request lastWeek {{= instances.weeksAgo(1) }}
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/events/attendance/list?instance_id={{lastWeek}}&details=true

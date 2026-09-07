@@ -1,0 +1,19 @@
+# Breeze account configuration - profile fields and tags.
+#
+# ListProfileFields is how you find the field ids in resterm.env.json
+# ({{fields.birthdate}}, {{fields.email}}, {{fields.phone}},
+# {{fields.familyRole}}) if the SGC account ever changes them.
+
+# @auth file apikey header Api-Key {{breeze.apiKey}}
+
+### Profile fields
+# @name ListProfileFields
+# @tag profile read
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/profile
+
+### Tags
+# @name ListTags
+# @tag profile read
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/tags/list_tags
