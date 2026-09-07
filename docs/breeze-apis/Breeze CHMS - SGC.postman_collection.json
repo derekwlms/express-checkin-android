@@ -180,14 +180,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/people/12990277",
+					"raw": "{{url}}/api/people/39900288",
 					"host": [
 						"{{url}}"
 					],
 					"path": [
 						"api",
 						"people",
-						"12990277"
+						"39900288"
 					]
 				}
 			},
@@ -249,6 +249,35 @@
 						{
 							"key": "fields_json",
 							"value": "[{\"field_id\":\"951543614\",\"field_type\":\"email\",\"response\":true,\"details\":{\"address\":\"zach.taylorrr@yahoo.com\"}}]"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "people - update person - last name - doesn't work",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/people/update?person_id=57696962&fields_json=[{\"field_id\":\"last_name\",\"field_type\":\"name\",\"response\":\"Gray\"}]",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"people",
+						"update"
+					],
+					"query": [
+						{
+							"key": "person_id",
+							"value": "57696962"
+						},
+						{
+							"key": "fields_json",
+							"value": "[{\"field_id\":\"last_name\",\"field_type\":\"name\",\"response\":\"Gray\"}]"
 						}
 					]
 				}
@@ -409,6 +438,25 @@
 					"path": [
 						"api",
 						"profile"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "profile - list tags",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/tags/list_tags",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"tags",
+						"list_tags"
 					]
 				}
 			},
