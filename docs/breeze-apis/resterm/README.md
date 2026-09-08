@@ -3,6 +3,9 @@
 Translated from `../Breeze CHMS - SGC.postman_collection.json`.
 Because Postman has become so evil.
 
+[Breeze API Doc](https://app.breezechms.com/api)
+
+
 ```sh
 ./open.sh              # opens checkin.http in the TUI
 ./open.sh people.http  # start somewhere else

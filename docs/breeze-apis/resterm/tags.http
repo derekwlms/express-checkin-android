@@ -1,0 +1,37 @@
+# Breeze tags - additional calls. See also profile.http.
+
+# @auth file apikey header Api-Key {{breeze.apiKey}}
+
+### Add tag to folder Community Groups
+# @name AddTagToFolderCGs
+# @tag profile write
+# @assert response.statusCode == 200
+# Commented out so we don't duplicate - Breeze API isn't idempotent, it duplicates
+# GET {{breeze.url}}/api/tags/add_tag?name=CG%20Derek%20Williams%202026&folder_id=624304
+
+### List Tags for Folder - Community Groups
+# @name ListTagsForFolderCG
+# @tag profile read
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/tags/list_tags?folder_id=624304
+
+### Add tag to folder Children's Ministry
+# @name AddTagToFolderCM
+# @tag profile write
+# @assert response.statusCode == 200
+# Commented out so we don't duplicate - Breeze API isn't idempotent, it duplicates
+# GET {{breeze.url}}/api/tags/add_tag?name=CM%20Check-In%20Volunteers%202026&folder_id=624303
+
+### List Tags for Folder - Children's Ministry
+# @name ListTagsForFolderCM
+# @tag profile read
+# @assert response.statusCode == 200
+GET {{breeze.url}}/api/tags/list_tags?folder_id=624303
+
+
+### Assign my CG tag to me
+# @name AssignTagToPerson
+# @tag profile write
+# @assert response.statusCode < 300
+# Commented out since it's already done
+# GET {{breeze.url}}/api/tags/assign?person_id=12990277&tag_id=5716309
