@@ -4,6 +4,7 @@ import android.app.DatePickerDialog
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -48,11 +49,17 @@ class GuestCheckinDialogFragment : DialogFragment() {
         val textWatcher = object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                binding.doneButton.isEnabled = requiredFields.all { it.text.isNotEmpty() } && areAllChildFieldsValid()
+                updateDoneButton()
             }
             override fun afterTextChanged(s: Editable?) {}
         }
         requiredFields.forEach { it.addTextChangedListener(textWatcher) }
+
+        // Breeze rejects a malformed email (HTTP 400), which would leave the guest stuck
+        // as a pending push, so validate it here where it can still be corrected.
+        binding.emailAddressEditText.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) showEmailErrorIfInvalid()
+        }
 
         binding.phoneNumberEditText.addTextChangedListener(object : TextWatcher {
             private var isFormatting: Boolean = false
@@ -86,6 +93,11 @@ class GuestCheckinDialogFragment : DialogFragment() {
         }
 
         binding.doneButton.setOnClickListener {
+            if (!isEmailValid()) {
+                showEmailErrorIfInvalid()
+                binding.emailAddressEditText.requestFocus()
+                return@setOnClickListener
+            }
             val guest = createGuest()
             checkinService.checkInGuest(guest)
             Toast.makeText(requireContext(), "Guest added: ${guest.fullName()}", Toast.LENGTH_SHORT).show()
@@ -146,7 +158,7 @@ class GuestCheckinDialogFragment : DialogFragment() {
             firstName = binding.firstNameEditText.text.toString(),
             lastName = binding.lastNameEditText.text.toString(),
             phoneNumber = binding.phoneNumberEditText.text.toString(),
-            emailAddress = binding.emailAddressEditText.text.toString(),
+            emailAddress = binding.emailAddressEditText.text.toString().trim(),
             dateOfBirth = dateOfBirth,
             children = children
         )
@@ -161,11 +173,31 @@ class GuestCheckinDialogFragment : DialogFragment() {
         val textWatcher = object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                binding.doneButton.isEnabled = areAllChildFieldsValid()
+                updateDoneButton()
             }
             override fun afterTextChanged(s: Editable?) {}
         }
         childFields.forEach { it.addTextChangedListener(textWatcher) }
+    }
+
+    private fun updateDoneButton() {
+        val requiredFilled = listOf(
+            binding.firstNameEditText,
+            binding.lastNameEditText,
+            binding.phoneNumberEditText,
+            binding.emailAddressEditText
+        ).all { it.text.isNotBlank() }
+        binding.doneButton.isEnabled = requiredFilled && isEmailValid() && areAllChildFieldsValid()
+        if (isEmailValid()) binding.emailAddressEditText.error = null
+    }
+
+    private fun isEmailValid(): Boolean =
+        Patterns.EMAIL_ADDRESS.matcher(binding.emailAddressEditText.text.toString().trim()).matches()
+
+    private fun showEmailErrorIfInvalid() {
+        val text = binding.emailAddressEditText.text.toString().trim()
+        binding.emailAddressEditText.error =
+            if (text.isNotEmpty() && !isEmailValid()) "Enter a valid email, like name@example.com" else null
     }
 
     private fun areAllChildFieldsValid(): Boolean {
