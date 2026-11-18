@@ -28,6 +28,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Base64
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
@@ -45,6 +46,19 @@ class CheckinService(private val context: Context) {
         const val FAMILY_ROLE_CHILD = "2"
         const val FAMILY_ROLE_HEAD_OF_HOUSEHOLD = "4"
         const val OFFLINE_BREEZE_ID_PREFIX = "OL_"
+
+        // Offline-added persons that Breeze rejected with a 4xx (bad data, e.g. a malformed
+        // email), keyed by offline id. Automatic sync cycles skip these rather than resend
+        // the same bad request every minute; a manual send retries them. Process-wide, so
+        // an app restart also gives them another try.
+        private val rejectedNewPersons = ConcurrentHashMap<String, String>()
+
+        // Families whose members were all pushed but could not be linked in Breeze
+        // (the local link is gone at that point, so they must be linked by hand).
+        private val unlinkedFamilies = ConcurrentHashMap<String, String>()
+
+        fun pushRejections(): List<String> =
+            rejectedNewPersons.values.sorted() + unlinkedFamilies.values.sorted()
     }
 
     init {
@@ -158,7 +172,7 @@ class CheckinService(private val context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             var message = ""
             if (isBreezeAccessible()) {
-                message += sendPendingNewPersonsToBreeze()
+                message += sendPendingNewPersonsToBreeze(retryRejected = true)
                 message += sendPendingCheckinsToBreeze()
             } else {
                 message = "Unable to access Breeze; cannot send pending data now"
@@ -193,22 +207,40 @@ class CheckinService(private val context: Context) {
         }
     }
 
-    suspend fun sendPendingNewPersonsToBreeze(): String {
+    suspend fun sendPendingNewPersonsToBreeze(retryRejected: Boolean = false): String {
         return try {
-            val pendingNewPersons = repository.getPendingNewPersons()
+            val allPending = repository.getPendingNewPersons()
+            val pendingIds = allPending.map { it.id }.toSet()
+            rejectedNewPersons.keys.retainAll(pendingIds)   // drop entries for persons since removed
+            val pendingNewPersons = if (retryRejected) allPending
+                else allPending.filterNot { rejectedNewPersons.containsKey(it.id) }
             var sentCount = 0
+            val pushedIds = mutableMapOf<String, String>()    // offline id -> Breeze id, this pass
             pendingNewPersons.forEach { person ->
                 val offlineId = person.id
                 val guest = person.asGuest()
                 Log.i("sendPendingNewPersonsToBreeze", "adding $person, $guest")
-                addGuestToBreeze(guest)
+                val rejection = addGuestToBreeze(guest)
+                if (rejection != null) {
+                    rejectedNewPersons[offlineId] = "${person.first_name} ${person.last_name}: $rejection"
+                    return@forEach
+                }
+                rejectedNewPersons.remove(offlineId)
                 val breezeId = guest.breezeId
                 // Only replace the local OL_ person once Breeze has assigned a real id;
                 // otherwise keep the offline person queued for the next sync.
                 if (breezeId.isNotEmpty() && !breezeId.startsWith(OFFLINE_BREEZE_ID_PREFIX)) {
+                    pushedIds[offlineId] = breezeId
+                    // This person's family list was loaded before earlier pushes in this pass.
+                    val family = OfflineFamily.remapAll(person.family, pushedIds)
+                    repository.remapPendingFamilyReferences(offlineId, breezeId)
                     repository.deletePerson(person)
                     addGuestToRepository(guest)
                     repository.remapPersonCheckins(offlineId, breezeId)
+                    // The last member of an offline family to be pushed links the family.
+                    if (OfflineFamily.isReadyToLink(family)) {
+                        linkFamilyInBreeze(family)
+                    }
                     sentCount++
                 }
             }
@@ -362,14 +394,26 @@ class CheckinService(private val context: Context) {
         }
     }
 
-    private suspend fun addGuestToBreeze(guest: Guest) {
+    // Returns a rejection reason if Breeze refused the parent with a 4xx (bad data that
+    // will fail the same way on every retry); null otherwise, including transient failures.
+    private suspend fun addGuestToBreeze(guest: Guest): String? {
         var familyMemberIds = emptyList<String>()
         var parentBreezeId: String? = ""
+        var rejection: String? = null
         try {
             Log.d("addGuestToBreeze - add new parent:", guest.toString())
             val fieldsList = getBreezeFields(guest.dateOfBirthMDY(), guest.phoneNumber, guest.emailAddress)
             val responseJson = apiService.addPerson(guest.firstName, guest.lastName, Gson().toJson(fieldsList))
             Log.d("addGuestToBreeze - add new parent - apiService.addPerson response:", responseJson.toString())
+            if (!responseJson.isSuccessful) {
+                val errorBody = runCatching { responseJson.errorBody()?.string() }.getOrNull().orEmpty()
+                Log.e("addGuestToBreeze",
+                    "Breeze rejected addPerson for ${guest.fullName()}: HTTP ${responseJson.code()} $errorBody")
+                if (responseJson.code() in 400..499) {
+                    rejection = "HTTP ${responseJson.code()}" +
+                        (if (errorBody.isNotBlank()) " - ${errorBody.take(200)}" else "")
+                }
+            }
             parentBreezeId = responseJson.body()?.get("id")?.asString
             if (!parentBreezeId.isNullOrEmpty()) {
                 familyMemberIds = familyMemberIds + parentBreezeId
@@ -412,11 +456,14 @@ class CheckinService(private val context: Context) {
                 checkInWithBreeze(breezeId, getBreezeInstanceId())
             }
         }
-        try {
-            apiService.createFamily(Gson().toJson(familyMemberIds))
-        } catch (e: Exception) {
-            Log.e("addGuestToBreeze - addFamily",
-                "Exception calling add family for $familyMemberIds", e)
+        // A one-person family is pointless; offline families are linked later by linkFamilyInBreeze.
+        if (familyMemberIds.size > 1) {
+            try {
+                apiService.createFamily(Gson().toJson(familyMemberIds))
+            } catch (e: Exception) {
+                Log.e("addGuestToBreeze - addFamily",
+                    "Exception calling add family for $familyMemberIds", e)
+            }
         }
         for ((index, familyMemberId) in familyMemberIds.withIndex()) {
             val familyRole = if (index == 0) FAMILY_ROLE_HEAD_OF_HOUSEHOLD else FAMILY_ROLE_CHILD
@@ -427,6 +474,47 @@ class CheckinService(private val context: Context) {
                 Log.e("addGuestToBreeze", "Exception calling updatePerson for the family_role $familyRole, person_id $familyMemberId - family_role", e)
             }
         }
+        return rejection
+    }
+
+    // Links people pushed separately (after being saved offline) into one Breeze family: joins
+    // an existing family if any member already has one, else creates one. Roles are set only
+    // for the people added, so existing members' roles are left alone.
+    private suspend fun linkFamilyInBreeze(family: List<FamilyMember>) {
+        val ids = OfflineFamily.orderedIds(family)
+        val key = ids.sorted().joinToString(",")
+        try {
+            val existingFamilyIds = ids.firstNotNullOfOrNull { id ->
+                apiService.getPerson(id).execute().body()?.family
+                    ?.map { it.person_id }?.takeIf { it.isNotEmpty() }
+            }
+            val newIds = if (existingFamilyIds == null) ids else ids.filterNot { it in existingFamilyIds }
+            if (newIds.isNotEmpty()) {
+                val response = if (existingFamilyIds == null) {
+                    apiService.createFamily(Gson().toJson(ids))
+                } else {
+                    val anchor = ids.first { it in existingFamilyIds }
+                    apiService.addToFamily(Gson().toJson(newIds), anchor)
+                }
+                if (!response.isSuccessful) {
+                    throw IllegalStateException("HTTP ${response.code()} " +
+                        runCatching { response.errorBody()?.string() }.getOrNull().orEmpty())
+                }
+                for (id in newIds) {
+                    val role = family.first { it.person_id == id }.family_role_id
+                    apiService.updatePerson(id, Gson().toJson(getBreezeFamilyRoleFields(id, role)))
+                }
+            }
+            // Refresh the local mirror so the linked family shows up before the next people sync.
+            for (id in ids) {
+                apiService.getPerson(id).execute().body()?.let { repository.addPerson(it) }
+            }
+            unlinkedFamilies.remove(key)
+            Log.i("linkFamilyInBreeze", "Linked family $ids (added $newIds)")
+        } catch (e: Exception) {
+            Log.e("linkFamilyInBreeze", "Unable to link family $ids in Breeze", e)
+            unlinkedFamilies[key] = "Family not linked in Breeze (link by hand): ${OfflineFamily.names(family)}"
+        }
     }
 
     private suspend fun addNewChildToBreeze(guest: Guest, parent: Person) {
@@ -435,6 +523,10 @@ class CheckinService(private val context: Context) {
             val fieldsList = getBreezeFields(guest.dateOfBirthMDY(), parent.getPrimaryPhone(), parent.getPrimaryEmailAddress())
             val responseJson = apiService.addPerson(guest.firstName, guest.lastName, Gson().toJson(fieldsList))
             Log.d("addNewChildToBreeze - apiService.addPerson response:", responseJson.toString())
+            if (!responseJson.isSuccessful) {
+                Log.e("addNewChildToBreeze", "Breeze rejected addPerson for ${guest.fullName()}: " +
+                    "HTTP ${responseJson.code()} ${runCatching { responseJson.errorBody()?.string() }.getOrNull().orEmpty()}")
+            }
             breezeId = responseJson.body()?.get("id")?.asString
         } catch (e: Exception) {
             Log.e("addNewChildToBreeze - apiService.addPerson",
@@ -503,14 +595,19 @@ class CheckinService(private val context: Context) {
     }
 
     private suspend fun saveGuestToRepository(guest: Guest) {
-        val person = guest.asPerson()
-        Log.d("saveGuestToRepository", "Adding to local repository: guest: $guest, person: $person")
-        repository.addPerson(person)
         for (guestChild in guest.children) {
             if (guestChild.breezeId.isNullOrEmpty()) {
                 guestChild.breezeId = "${OFFLINE_BREEZE_ID_PREFIX}${System.currentTimeMillis()}_${guestChild.firstName}"
             }
-            repository.addPerson(guestChild.asPerson())
+        }
+        // Keep the family link locally, so the family can be checked in together while
+        // offline and is linked in Breeze once every member has been pushed.
+        val family = OfflineFamily.forGuest(guest)
+        val person = guest.asPerson().copy(family = family)
+        Log.d("saveGuestToRepository", "Adding to local repository: guest: $guest, person: $person")
+        repository.addPerson(person)
+        for (guestChild in guest.children) {
+            repository.addPerson(guestChild.asPerson().copy(family = family))
         }
     }
 
@@ -519,8 +616,10 @@ class CheckinService(private val context: Context) {
             newChild.breezeId = OFFLINE_BREEZE_ID_PREFIX + System.currentTimeMillis()
             Log.d("addNewChildToRepository",
                 "Breeze ID not set, so assigning offline ID: ${newChild.breezeId}, guest: $newChild, parent: $parent")
-            // If offline, fall back to using the guest data directly
-            repository.addPerson(newChild.asPerson())
+            // If offline, fall back to using the guest data directly, keeping the link to
+            // the parent so the child joins the parent's Breeze family once pushed.
+            val family = parent?.let { OfflineFamily.forNewChild(newChild, it) } ?: emptyList()
+            repository.addPerson(newChild.asPerson().copy(family = family))
             return
         }
         try {

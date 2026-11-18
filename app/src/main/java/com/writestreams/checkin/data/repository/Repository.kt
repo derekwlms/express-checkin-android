@@ -1,5 +1,6 @@
 package com.writestreams.checkin.data.repository
 
+import com.writestreams.checkin.service.OfflineFamily
 import android.content.Context
 import com.writestreams.checkin.data.local.AppDatabase
 import com.writestreams.checkin.data.local.Checkin
@@ -237,6 +238,15 @@ class Repository(private val context: Context) {
     suspend fun searchPersons(query: String): List<Person> {
         return withContext(Dispatchers.IO) {
             personDao.searchPersons("%$query%")
+        }
+    }
+
+    // When an offline (OL_) person is pushed, point other pending persons' family links at the new Breeze id.
+    suspend fun remapPendingFamilyReferences(oldPersonId: String, newPersonId: String) {
+        withContext(Dispatchers.IO) {
+            personDao.getPendingNewPersons()
+                .filter { person -> person.family.any { it.person_id == oldPersonId } }
+                .forEach { personDao.update(it.copy(family = OfflineFamily.remap(it.family, oldPersonId, newPersonId))) }
         }
     }
 

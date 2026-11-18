@@ -29,7 +29,8 @@ data class SyncStatus(
     val breezeReachable: Boolean? = null,   // null until the first probe completes
     val lastAttendanceSync: LocalDateTime? = null,
     val lastPeopleSync: LocalDateTime? = null,
-    val pendingPushCount: Int = 0
+    val pendingPushCount: Int = 0,
+    val pushRejections: List<String> = emptyList()   // pending items Breeze refused (bad data)
 )
 
 /**
@@ -221,7 +222,8 @@ class SyncEngine private constructor(private val context: Context) {
             breezeReachable = reachable,
             lastAttendanceSync = if (attendanceSynced) LocalDateTime.now() else _status.value.lastAttendanceSync,
             lastPeopleSync = lastPeopleSync,
-            pendingPushCount = pendingCount
+            pendingPushCount = pendingCount,
+            pushRejections = CheckinService.pushRejections()
         )
     }
 
