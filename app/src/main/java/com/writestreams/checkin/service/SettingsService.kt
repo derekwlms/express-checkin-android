@@ -1,7 +1,12 @@
 package com.writestreams.checkin.service
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
@@ -30,6 +35,17 @@ class SettingsService(private val context: Context) {
             if (offset < 0 || offset % 2 != 0) return null
             return BREEZE_INSTANCE_ID_START_DATE.plusWeeks((offset / 2).toLong())
         }
+
+        // The selected event, re-emitted whenever it changes (Settings, or the wrong-event banner)
+        fun selectedEventFlow(context: Context): Flow<String> = callbackFlow {
+            val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+                if (key == "breeze_instance_id") trySend(currentBreezeInstanceId(context))
+            }
+            prefs.registerOnSharedPreferenceChangeListener(listener)
+            send(currentBreezeInstanceId(context))
+            awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+        }.distinctUntilChanged()
 
         // The single source for "which event instance is current" - preferring the
         // stored value (which the Settings date picker can override) over today's.

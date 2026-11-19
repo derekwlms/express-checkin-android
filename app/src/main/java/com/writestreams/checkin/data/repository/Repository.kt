@@ -133,8 +133,8 @@ class Repository(private val context: Context) {
 
     // Observable variants: Room re-emits whenever the checkins table changes,
     // so screens update when the sync engine (or a check-in here) writes to the database
-    fun observeCheckedInPersons(): Flow<List<Person>> {
-        return checkinDao.observeCheckedInForInstance(currentInstanceId())
+    fun observeCheckedInPersons(instanceId: String = currentInstanceId()): Flow<List<Person>> {
+        return checkinDao.observeCheckedInForInstance(instanceId)
             .map { attachPersons(it) }
             .flowOn(Dispatchers.IO)
     }

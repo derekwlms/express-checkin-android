@@ -7,6 +7,7 @@ import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.service.CheckinService
 import com.writestreams.checkin.service.PendingItems
+import com.writestreams.checkin.service.SettingsService
 import com.writestreams.checkin.service.SyncEngine
 import com.writestreams.checkin.service.SyncStatus
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,10 +37,10 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
     private val source = MutableStateFlow(Source.ALL)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val rows: StateFlow<List<AttendanceRow>> = source
-        .flatMapLatest { selected ->
+    val rows: StateFlow<List<AttendanceRow>> = combine(source, SettingsService.selectedEventFlow(application)) { s, e -> s to e }
+        .flatMapLatest { (selected, eventId) ->
             when (selected) {
-                Source.ALL -> repository.observeCheckedInPersons().map { persons ->
+                Source.ALL -> repository.observeCheckedInPersons(eventId).map { persons ->
                     persons.sortedBy { it.nameLastFirst().lowercase() }.map { allRow(it) }
                 }
                 Source.PENDING -> combine(repository.observePendingItems(), syncStatus) { items, _ ->
