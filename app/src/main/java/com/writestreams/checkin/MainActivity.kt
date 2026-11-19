@@ -19,6 +19,7 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.writestreams.checkin.util.AppScope
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.ActivityMainBinding
 import com.writestreams.checkin.util.AttendanceEmailScheduler
@@ -29,7 +30,6 @@ import com.writestreams.checkin.service.SyncEngine
 import com.writestreams.checkin.service.SyncStatus
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
         val currentInstanceId = settingsService.updateBreezeInstanceId(LocalDate.now())
         setUpBanners()
 
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScope.io.launch {
             try {
                 // Weekly rollover: push any check-ins/persons still pending from past
                 // weeks (to their own event instances), then purge those old rows.

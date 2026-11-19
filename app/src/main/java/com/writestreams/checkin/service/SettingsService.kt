@@ -72,6 +72,13 @@ class SettingsService(private val context: Context) {
         return sharedPreferences.getString("breeze_instance_id", null)
     }
 
+    // The name of the saved printer (by its Bluetooth address), or null if it isn't a known one
+    fun getPrinterName(): String? {
+        val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val address = sharedPreferences.getString("printer_device_address", deviceAddresses["Printer A"])
+        return deviceAddresses.entries.firstOrNull { it.value == address }?.key
+    }
+
     fun updatePrinterDeviceAddress(printerName: String) {
         val deviceAddress =  deviceAddresses[printerName] ?: "66:32:F6:7A:4D:65"
         val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)

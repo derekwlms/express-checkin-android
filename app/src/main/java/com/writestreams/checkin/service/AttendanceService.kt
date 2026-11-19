@@ -3,51 +3,27 @@ package com.writestreams.checkin.service
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import com.writestreams.checkin.data.network.BreezeChmsApiService
+import com.writestreams.checkin.util.AppScope
+import com.writestreams.checkin.data.network.NetworkClients
 import com.writestreams.checkin.data.network.MailgunService
 import com.writestreams.checkin.util.ApiKeys
-import com.writestreams.checkin.util.ApiKeys.BREEZE_API_URL
-import com.writestreams.checkin.util.ApiKeys.MAILGUN_URL
 import com.writestreams.checkin.util.AttendanceLabel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Base64
 
 class AttendanceService(private val context: Context) {
 
-    private val breezeApiService: BreezeChmsApiService
     private val bluetoothPrintService = BluetoothPrintService(context)
-    private val mailgunService: MailgunService
-
-    init {
-        val mailClient = OkHttpClient.Builder().build()
-        val mailRetrofit = Retrofit.Builder()
-            .baseUrl(MAILGUN_URL)
-            .client(mailClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        mailgunService = mailRetrofit.create(MailgunService::class.java)
-
-        val breezeApiClient = OkHttpClient.Builder().build()
-        val breezeApiRetrofit = Retrofit.Builder()
-            .baseUrl(BREEZE_API_URL)
-            .client(breezeApiClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        breezeApiService = breezeApiRetrofit.create(BreezeChmsApiService::class.java)
-    }
+    private val mailgunService: MailgunService = NetworkClients.mailgunService
 
     fun printAttendanceList(attendanceList: List<String>) {
         val dateTime = DateTimeFormatter.ofPattern("MMM d, yyyy (h:mm a)").format(LocalDateTime.now())
         val chunkedAttendanceList = attendanceList.chunked(16)
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScope.io.launch {
             chunkedAttendanceList.forEachIndexed { index, chunk ->
                 val label = AttendanceLabel(dateTime, chunk.size.toString(), chunk, isContinuation = index > 0)
                 bluetoothPrintService.printLabel(label)
@@ -64,7 +40,7 @@ class AttendanceService(private val context: Context) {
         val credentials = Base64.getEncoder().encodeToString(ApiKeys.MAILGUN_API_KEY.toByteArray())
         val authorization = "Basic $credentials"
 
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScope.io.launch {
             try {
                 val response = mailgunService.sendEmail(
                     authorization,
