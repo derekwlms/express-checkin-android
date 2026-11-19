@@ -25,4 +25,12 @@ class SettingsServiceTest {
         // Saturday Feb 8 still belongs to the week that started Sunday Feb 2
         assertEquals("210398276", SettingsService.computeBreezeInstanceId(LocalDate.of(2025, 2, 8)))
     }
+
+    @Test
+    fun instanceDateIsTheInverseOfComputeBreezeInstanceId() {
+        assertEquals(LocalDate.of(2026, 11, 15), SettingsService.instanceDate("210398462"))
+        assertEquals(LocalDate.of(2025, 2, 2), SettingsService.instanceDate("210398276"))
+        assertEquals(null, SettingsService.instanceDate("210398461"))   // odd: not a check-in instance
+        assertEquals(null, SettingsService.instanceDate("not-a-number"))
+    }
 }

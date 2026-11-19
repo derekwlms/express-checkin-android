@@ -18,5 +18,8 @@ data class Checkin(
     val checkinDateTime: LocalDateTime,
     val checkinCode: String? = null,
     val checkinCounter: String? = null,
-    var breezeSyncDateTime: LocalDateTime? = null
+    var breezeSyncDateTime: LocalDateTime? = null,
+    // Set when checked out on this tablet; the row stays (and the person no longer counts
+    // as checked in) until Breeze confirms the check-out, so offline check-outs aren't lost.
+    val checkoutDateTime: LocalDateTime? = null
 )

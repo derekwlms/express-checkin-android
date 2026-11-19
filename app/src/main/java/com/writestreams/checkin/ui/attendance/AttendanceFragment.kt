@@ -25,11 +25,12 @@ class AttendanceFragment : Fragment() {
 
     private var _binding: FragmentAttendanceBinding? = null
     private val binding get() = _binding!!
-    private lateinit var adapter: CheckedInPersonAdapter
+    private lateinit var adapter: AttendanceRowAdapter
     private lateinit var attendanceService: AttendanceService
     private lateinit var checkinService: CheckinService
     private lateinit var viewModel: AttendanceViewModel
-    private var personsList: List<Person> = listOf()
+    private var rows: List<AttendanceRow> = listOf()
+    private var shownRows: List<AttendanceRow> = listOf()
     private var searchQuery: String = ""
 
     override fun onCreateView(
@@ -46,7 +47,7 @@ class AttendanceFragment : Fragment() {
         attendanceService = AttendanceService(requireContext())
         checkinService = CheckinService(requireContext())
         viewModel = ViewModelProvider(this)[AttendanceViewModel::class.java]
-        adapter = CheckedInPersonAdapter(personsList) { person ->
+        adapter = AttendanceRowAdapter { person ->
             showCheckOutConfirmationDialog(person)
         }
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -54,21 +55,24 @@ class AttendanceFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.persons.collect { persons ->
-                    personsList = persons
-                    showFilteredList()
-                    binding.attendeesBadge.text = persons.size.toString()
+                launch {
+                    viewModel.rows.collect {
+                        rows = it
+                        showFilteredList()
+                    }
+                }
+                launch {
+                    viewModel.statusText.collect { binding.syncStatusTextView.text = it }
                 }
             }
         }
 
         binding.sourceRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+            // A search left over from the other tab would silently hide rows here
+            binding.searchView.setQuery("", false)
             viewModel.setSource(
-                when (checkedId) {
-                    R.id.localRadioButton -> AttendanceViewModel.Source.LOCAL
-                    R.id.pendingRadioButton -> AttendanceViewModel.Source.PENDING
-                    else -> AttendanceViewModel.Source.BREEZE
-                }
+                if (checkedId == R.id.pendingRadioButton) AttendanceViewModel.Source.PENDING
+                else AttendanceViewModel.Source.ALL
             )
         }
 
@@ -89,23 +93,28 @@ class AttendanceFragment : Fragment() {
         }
 
         binding.printButton.setOnClickListener {
-            val attendanceList = personsList.map { "${it.first_name} ${it.last_name}" }
+            val attendanceList = shownRows.map { it.name }
             attendanceService.printAttendanceList(attendanceList)
         }
 
         binding.emailButton.setOnClickListener {
-            val attendanceList = personsList.map { "${it.nameLastFirst()} - ${it.id} - ${it.getFormattedCheckinTime()}" }
+            val attendanceList = shownRows.map { row ->
+                row.person?.let { "${it.nameLastFirst()} - ${it.id} - ${it.getFormattedCheckinTime()}" }
+                    ?: "${row.name} - ${row.detail}"
+            }
             val recipient = ApiKeys.EMAIL_RECIPIENTS
             attendanceService.emailAttendanceList(attendanceList, recipient)
         }
     }
 
     private fun showFilteredList() {
-        val filteredList = if (searchQuery.isEmpty()) personsList else personsList.filter {
-            it.first_name.contains(searchQuery, ignoreCase = true) ||
-                    it.last_name.contains(searchQuery, ignoreCase = true)
+        shownRows = if (searchQuery.isEmpty()) rows else rows.filter {
+            it.name.contains(searchQuery, ignoreCase = true)
         }
-        adapter.updateList(filteredList)
+        adapter.updateList(shownRows)
+        // The badge counts what's shown, so a search can't make the list look incomplete
+        binding.attendeesBadge.text =
+            if (searchQuery.isEmpty()) rows.size.toString() else "${shownRows.size} of ${rows.size}"
     }
 
     private fun showCheckOutConfirmationDialog(person: Person) {
