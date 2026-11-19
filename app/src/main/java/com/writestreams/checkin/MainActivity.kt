@@ -1,10 +1,14 @@
 package com.writestreams.checkin
 
 import android.app.AlertDialog
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
@@ -18,6 +22,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.databinding.ActivityMainBinding
 import com.writestreams.checkin.util.AttendanceEmailScheduler
+import com.writestreams.checkin.util.StatusBanners
 import com.writestreams.checkin.service.CheckinService
 import com.writestreams.checkin.service.SettingsService
 import com.writestreams.checkin.service.SyncEngine
@@ -35,6 +40,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var repository: Repository
     private var breezeStatusItem: MenuItem? = null
     private var latestSyncStatus = SyncStatus()
+
+    // Re-check the wrong-event banner whenever the selected event changes (e.g. in Settings)
+    private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == SELECTED_EVENT_KEY) updateBanners()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +69,7 @@ class MainActivity : AppCompatActivity() {
 
         val settingsService = SettingsService(applicationContext)
         val currentInstanceId = settingsService.updateBreezeInstanceId(LocalDate.now())
+        setUpBanners()
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -106,9 +117,45 @@ class MainActivity : AppCompatActivity() {
                 SyncEngine.getInstance(applicationContext).status.collect { status ->
                     latestSyncStatus = status
                     updateBreezeStatusIcon(status)
+                    // Also re-checks the event each sync cycle, catching the day rolling over
+                    updateBanners()
                 }
             }
         }
+    }
+
+    private fun setUpBanners() {
+        binding.offlineBanner.setOnClickListener {
+            SyncEngine.getInstance(applicationContext).requestSyncNow()
+            showSyncStatusDialog(latestSyncStatus)
+        }
+        binding.wrongEventBanner.setOnClickListener { confirmSwitchToCurrentEvent() }
+        updateBanners()
+    }
+
+    private fun updateBanners() {
+        val selectedInstanceId = SettingsService.currentBreezeInstanceId(applicationContext)
+        showBanner(binding.wrongEventBanner, StatusBanners.wrongEventText(selectedInstanceId, LocalDate.now()))
+        showBanner(binding.offlineBanner, StatusBanners.offlineText(latestSyncStatus))
+    }
+
+    private fun showBanner(banner: TextView, text: String?) {
+        banner.text = text ?: ""
+        banner.visibility = if (text == null) View.GONE else View.VISIBLE
+    }
+
+    private fun confirmSwitchToCurrentEvent() {
+        val today = LocalDate.now()
+        val currentDate = SettingsService.instanceDate(SettingsService.computeBreezeInstanceId(today))
+        AlertDialog.Builder(this)
+            .setTitle("Switch event?")
+            .setMessage("Check in to the current event (${currentDate?.format(DateTimeFormatter.ofPattern("EEE, MMM d"))}) instead?")
+            .setPositiveButton("Switch") { _, _ ->
+                SettingsService(applicationContext).updateBreezeInstanceId(today)
+                SyncEngine.getInstance(applicationContext).requestSyncNow()
+            }
+            .setNegativeButton("Keep", null)
+            .show()
     }
 
     private fun updateBreezeStatusIcon(status: SyncStatus) {
@@ -160,14 +207,19 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         SyncEngine.getInstance(applicationContext).start()
+        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).registerOnSharedPreferenceChangeListener(prefsListener)
+        updateBanners()     // the app may have sat in the background since an earlier week
     }
 
     override fun onStop() {
         super.onStop()
         SyncEngine.getInstance(applicationContext).stop()
+        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(prefsListener)
     }
 
     companion object {
+        private const val PREFS_NAME = "app_prefs"                  // as in SettingsService
+        private const val SELECTED_EVENT_KEY = "breeze_instance_id"
         private val COLOR_REACHABLE = 0xFF4CAF50.toInt()     // green
         private val COLOR_PENDING = 0xFFFFC107.toInt()       // amber: reachable, pushes queued
         private val COLOR_UNREACHABLE = 0xFFBDBDBD.toInt()   // gray
