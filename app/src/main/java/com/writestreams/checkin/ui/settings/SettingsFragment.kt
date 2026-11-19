@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import android.widget.Button
 import android.widget.DatePicker
 import android.widget.EditText
@@ -83,6 +84,7 @@ class SettingsFragment : Fragment() {
         repository = Repository(requireContext())
 
         printerNamesSpinner = view.findViewById(R.id.printerNamesSpinner)
+        setUpPrinterSpinner()
         labelTextEditText = view.findViewById(R.id.labelTextEditText)
         printButton = view.findViewById(R.id.printButton)
 
@@ -110,6 +112,25 @@ class SettingsFragment : Fragment() {
         val deleteAllPersonsButton: Button = view.findViewById(R.id.deleteAllPersonsButton)
         deleteAllPersonsButton.setOnClickListener {
             confirmThenDeleteAllPersons()
+        }
+    }
+
+    // Show the printer actually in use, and save a new choice as soon as it's picked
+    // (it used to be saved only by Test Print, so a picked printer could silently not stick).
+    private fun setUpPrinterSpinner() {
+        val printerNames = resources.getStringArray(R.array.printer_names)
+        val savedIndex = printerNames.indexOf(settingsService.getPrinterName())
+        if (savedIndex >= 0) printerNamesSpinner.setSelection(savedIndex, false)
+        var shownPosition = printerNamesSpinner.selectedItemPosition
+        printerNamesSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, v: View?, position: Int, id: Long) {
+                if (position == shownPosition) return   // the initial callback, not a user change
+                shownPosition = position
+                settingsService.updatePrinterDeviceAddress(printerNames[position])
+                Toast.makeText(requireContext(), "Labels will print on ${printerNames[position]}",
+                    Toast.LENGTH_SHORT).show()
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
     }
 
