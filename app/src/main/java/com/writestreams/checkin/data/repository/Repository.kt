@@ -1,6 +1,7 @@
 package com.writestreams.checkin.data.repository
 
 import android.content.Context
+import com.writestreams.checkin.data.network.NetworkClients
 import com.writestreams.checkin.data.local.AppDatabase
 import com.writestreams.checkin.data.local.Checkin
 import com.writestreams.checkin.data.local.CheckinDao
@@ -11,7 +12,6 @@ import com.writestreams.checkin.service.OfflineFamily
 import com.writestreams.checkin.service.PendingItem
 import com.writestreams.checkin.service.PendingItems
 import com.writestreams.checkin.service.SettingsService
-import com.writestreams.checkin.util.ApiKeys.BREEZE_API_URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -21,43 +21,28 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.time.LocalDateTime
-import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class Repository(private val context: Context) {
-    private val apiService: BreezeChmsApiService
+    private val apiService: BreezeChmsApiService = NetworkClients.breezeApiService
     private val personDao: PersonDao
     private val checkinDao: CheckinDao
 
     companion object {
-        // Guards the read-max-then-insert sequence for check-in counters
-        // across all Repository instances
+        // Guards check-in counter assignment across all Repository instances
         private val checkinCounterMutex = Mutex()
+        // The last counter handed out. Rows are often saved after their labels print, so the
+        // table's MAX alone would give siblings (and back-to-back families) the same number.
+        private var lastIssuedCounter = 0
+        private var lastIssuedInstanceId: String? = null    // so the count restarts each week
     }
 
     init {
-        val client = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .build()
-
-        val retrofit = Retrofit.Builder()
-            .client(client)
-            .baseUrl(BREEZE_API_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        apiService = retrofit.create(BreezeChmsApiService::class.java)
-
         val db = AppDatabase.getDatabase(context)
         personDao = db.personDao()
         checkinDao = db.checkinDao()
@@ -110,6 +95,7 @@ class Repository(private val context: Context) {
     suspend fun resetAllCheckins() {
         return withContext(Dispatchers.IO) {
             checkinDao.deleteAll()
+            checkinCounterMutex.withLock { lastIssuedCounter = 0 }
         }
     }
 
@@ -223,7 +209,12 @@ class Repository(private val context: Context) {
     suspend fun nextCheckinCounter(): String {
         return checkinCounterMutex.withLock {
             withContext(Dispatchers.IO) {
-                ((checkinDao.getMaxCheckinCounter() ?: 0) + 1).toString()
+                if (lastIssuedInstanceId != currentInstanceId()) {
+                    lastIssuedInstanceId = currentInstanceId()
+                    lastIssuedCounter = 0
+                }
+                lastIssuedCounter = maxOf(checkinDao.getMaxCheckinCounter() ?: 0, lastIssuedCounter) + 1
+                lastIssuedCounter.toString()
             }
         }
     }
@@ -283,6 +274,7 @@ class Repository(private val context: Context) {
         withContext(Dispatchers.IO) {
             personDao.deleteAll()
             checkinDao.deleteAll()
+            checkinCounterMutex.withLock { lastIssuedCounter = 0 }
         }
     }
 }

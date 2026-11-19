@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import com.google.gson.Gson
+import com.writestreams.checkin.util.AppScope
+import com.writestreams.checkin.data.network.NetworkClients
 import com.writestreams.checkin.data.local.Checkin
 import com.writestreams.checkin.data.local.FamilyMember
 import com.writestreams.checkin.data.local.Guest
@@ -13,31 +15,24 @@ import com.writestreams.checkin.data.network.BreezeChmsApiService
 import com.writestreams.checkin.data.network.MailgunService
 import com.writestreams.checkin.data.repository.Repository
 import com.writestreams.checkin.util.ApiKeys
-import com.writestreams.checkin.util.ApiKeys.BREEZE_API_URL
-import com.writestreams.checkin.util.ApiKeys.MAILGUN_URL
 import com.writestreams.checkin.util.ChildLabel
 import com.writestreams.checkin.util.GuestLabel
 import com.writestreams.checkin.util.ParentLabel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 class CheckinService(private val context: Context) {
 
     private val repository = Repository(context)
-    private val apiService: BreezeChmsApiService
+    private val apiService: BreezeChmsApiService = NetworkClients.breezeApiService
     private val bluetoothPrintService = BluetoothPrintService(context)
-    private val mailgunService: MailgunService
+    private val mailgunService: MailgunService = NetworkClients.mailgunService
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy (h:mm a)")
         // Do not print Breeze-automated notes on labels; exampLe:  "3042 - Fred & Wilma"
     private val EXCLUDED_NOTES_FORMAT_REGEX = """^\d{2,}\s*-\s*.+""".toRegex()
@@ -65,28 +60,6 @@ class CheckinService(private val context: Context) {
         fun rejectionsById(): Map<String, String> = rejectedNewPersons.mapValues { it.value.reason }
     }
 
-    init {
-        val client = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .build()
-        val retrofit = Retrofit.Builder()
-            .client(client)
-            .baseUrl(BREEZE_API_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        apiService = retrofit.create(BreezeChmsApiService::class.java)
-
-        val mailClient = OkHttpClient.Builder().build()
-        val mailRetrofit = Retrofit.Builder()
-            .baseUrl(MAILGUN_URL)
-            .client(mailClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        mailgunService = mailRetrofit.create(MailgunService::class.java)
-    }
-
     fun checkinFamily(
         existingFamilyMembers: List<FamilyMember>,
         checkedFamilyMembers: Set<FamilyMember>,
@@ -97,47 +70,57 @@ class CheckinService(private val context: Context) {
         val formattedDateTime = dateTimeFormatter.format(currentDateTime)
         val checkinCode = Random.nextInt(1000, 9999).toString()
         val breezeInstanceId = getBreezeInstanceId()
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScope.io.launch {
             val parentFamilyMembers =
                 existingFamilyMembers.filter { it.family_role_id != FAMILY_ROLE_CHILD }
             val parentPersons = parentFamilyMembers.map { repository.getPersonById(it.person_id) }
-            for (member in checkedFamilyMembers) {
-                val childPerson = repository.getPersonById(member.person_id)
-                childPerson?.let {
-                    val counter = repository.nextCheckinCounter()
-                    repository.checkIn(Checkin(it.id, breezeInstanceId, currentDateTime, checkinCode, counter))
-                    printChildLabel(it, parentPersons, formattedDateTime, mobilePhoneNumber, checkinCode, counter)
-                    if (checkInWithBreeze(it.id, breezeInstanceId)) {
-                        repository.setCheckedInWithBreeze(it.id, breezeInstanceId, LocalDateTime.now())
-                    }
-                }
+            val tryBreeze = !breezeKnownUnreachable()
+
+            // 1. Save locally and print every label first, so printing never waits on Breeze
+            val children = checkedFamilyMembers.mapNotNull { repository.getPersonById(it.person_id) }
+            for (child in children) {
+                val counter = repository.nextCheckinCounter()
+                repository.checkIn(Checkin(child.id, breezeInstanceId, currentDateTime, checkinCode, counter))
+                printChildLabel(child, parentPersons, formattedDateTime, mobilePhoneNumber, checkinCode, counter)
             }
-            for (guestChild in newChildren) {
-                val guest = guestChild.asGuest()
-                guest.let {
+            val newChildGuests = newChildren.map { guestChild ->
+                guestChild.asGuest().also {
                     it.checkinDateTime = formattedDateTime
                     it.checkinCode = checkinCode
                     it.checkinCounter = repository.nextCheckinCounter()
                     printGuestChildLabel(it, parentPersons, formattedDateTime)
-                    val primaryParent = parentPersons.firstOrNull()
-                    if (primaryParent != null) {
-                        addNewChildToBreeze(it, primaryParent)
-                    }
-                    emailGuestInfo(guest, primaryParent)
-                    addNewChildToRepository(it, primaryParent)
-                    recordLocalCheckin(it.breezeId, breezeInstanceId, currentDateTime, checkinCode, it.checkinCounter)
                 }
             }
             printParentLabel(parentPersons, checkinCode, formattedDateTime)
+
+            // 2. Then Breeze. Skipped when it's known to be unreachable: the check-ins stay
+            // pending and the sync engine pushes them once Breeze is back.
+            if (tryBreeze) {
+                for (child in children) {
+                    if (checkInWithBreeze(child.id, breezeInstanceId)) {
+                        repository.setCheckedInWithBreeze(child.id, breezeInstanceId, LocalDateTime.now())
+                    }
+                }
+            }
+            val primaryParent = parentPersons.firstOrNull()
+            for (guest in newChildGuests) {
+                if (tryBreeze && primaryParent != null) {
+                    addNewChildToBreeze(guest, primaryParent)
+                }
+                emailGuestInfo(guest, primaryParent)
+                addNewChildToRepository(guest, primaryParent)
+                recordLocalCheckin(guest.breezeId, breezeInstanceId, currentDateTime, checkinCode,
+                    guest.checkinCounter, tryBreeze)
+            }
         }
     }
 
     // The check-out is queued locally first, so it isn't lost if Breeze can't be reached;
     // the sync engine retries queued check-outs until Breeze confirms them.
     fun checkOutPerson(person: Person) {
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScope.io.launch {
             val instanceId = repository.checkOut(person.id) ?: getBreezeInstanceId()
-            if (checkOutWithBreeze(person.id, instanceId)) {
+            if (!breezeKnownUnreachable() && checkOutWithBreeze(person.id, instanceId)) {
                 repository.deleteCheckin(person.id, instanceId)
             }
         }
@@ -165,18 +148,23 @@ class CheckinService(private val context: Context) {
 
     fun checkInGuest(guest: Guest) {
         Log.d("checkinGuest:", guest.toString())
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScope.io.launch {
             val currentDateTime = LocalDateTime.now()
             val breezeInstanceId = getBreezeInstanceId()
             guest.checkinDateTime = dateTimeFormatter.format(currentDateTime)
             guest.checkinCode = Random.nextInt(1000, 9999).toString()
+            val tryBreeze = !breezeKnownUnreachable()
             printGuestLabels(guest)     // assigns each child's checkinCounter
             emailGuestInfo(guest)
-            addGuestToBreeze(guest)
+            // When Breeze is known to be down, save the family locally (offline ids) right
+            // away instead of waiting on timeouts; the sync engine adds them later.
+            if (tryBreeze) {
+                addGuestToBreeze(guest)
+            }
             addGuestToRepository(guest)
             for (guestChild in guest.children) {
                 recordLocalCheckin(guestChild.breezeId, breezeInstanceId, currentDateTime,
-                    guest.checkinCode, guestChild.checkinCounter)
+                    guest.checkinCode, guestChild.checkinCounter, tryBreeze)
             }
         }
     }
@@ -186,18 +174,25 @@ class CheckinService(private val context: Context) {
     // confirmed Breeze check-in.
     private suspend fun recordLocalCheckin(personId: String?, instanceId: String,
                                            checkinDateTime: LocalDateTime,
-                                           checkinCode: String?, checkinCounter: String?) {
+                                           checkinCode: String?, checkinCounter: String?,
+                                           tryBreeze: Boolean) {
         if (personId.isNullOrEmpty()) {
             Log.w("recordLocalCheckin", "No person id assigned; skipping local check-in row")
             return
         }
-        val synced = !personId.startsWith(OFFLINE_BREEZE_ID_PREFIX) && checkInWithBreeze(personId, instanceId)
+        val synced = tryBreeze && !personId.startsWith(OFFLINE_BREEZE_ID_PREFIX) &&
+            checkInWithBreeze(personId, instanceId)
         repository.checkIn(Checkin(personId, instanceId, checkinDateTime, checkinCode, checkinCounter,
             if (synced) LocalDateTime.now() else null))
     }
 
+    // True when the sync engine's last check found Breeze unreachable. Interactive check-ins
+    // then skip Breeze rather than wait out network timeouts; the sync engine pushes later.
+    private fun breezeKnownUnreachable(): Boolean =
+        SyncEngine.getInstance(context).status.value.breezeReachable == false
+
     fun sendLocalDataToBreeze() {
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScope.io.launch {
             var message = ""
             if (isBreezeAccessible()) {
                 message += sendPendingNewPersonsToBreeze(retryRejected = true)
@@ -404,7 +399,7 @@ class CheckinService(private val context: Context) {
         val credentials = Base64.getEncoder().encodeToString(ApiKeys.MAILGUN_API_KEY.toByteArray())
         val authorization = "Basic $credentials"
 
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScope.io.launch {
             try {
                 val response = mailgunService.sendEmail(
                     authorization,
