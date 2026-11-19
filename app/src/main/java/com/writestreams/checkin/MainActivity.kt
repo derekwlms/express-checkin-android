@@ -140,7 +140,7 @@ class MainActivity : AppCompatActivity() {
             appendLine()
             appendLine("Last attendance sync: ${status.lastAttendanceSync?.format(timeFormatter) ?: "never"}")
             appendLine("Last member refresh: ${status.lastPeopleSync?.format(timeFormatter) ?: "never"}")
-            appendLine("Pending pushes: ${status.pendingPushCount}")
+            appendLine("Not yet in Breeze: ${status.pendingPushCount} (see Attendance > Pending)")
             if (status.pushRejections.isNotEmpty()) {
                 appendLine()
                 appendLine("Rejected by Breeze (fix the data, then use Sync with Breeze on the Attendance screen to retry):")

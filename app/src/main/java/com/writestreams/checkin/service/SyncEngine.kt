@@ -15,6 +15,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -60,6 +61,11 @@ class SyncEngine private constructor(private val context: Context) {
             // Only a hint to try sooner - the Breeze probe stays the source of truth.
             requestSyncNow()
         }
+
+        override fun onLost(network: Network) {
+            // Re-probe right away so the status shows "unreachable" without waiting for the next poll
+            requestSyncNow()
+        }
     }
 
     init {
@@ -78,6 +84,13 @@ class SyncEngine private constructor(private val context: Context) {
         }
         apiService = retrofitWithTimeout(30)
         probeApiService = retrofitWithTimeout(PROBE_TIMEOUT_SECONDS)
+
+        // Keep the pending count live (it matches the Pending tab), not just once per sync cycle
+        scope.launch {
+            repository.observePendingItems().collect { items ->
+                _status.update { it.copy(pendingPushCount = items.size) }
+            }
+        }
     }
 
     fun start() {
@@ -130,6 +143,7 @@ class SyncEngine private constructor(private val context: Context) {
         try {
             checkinService.sendPendingNewPersonsToBreeze()
             checkinService.sendPendingCheckinsToBreeze()
+            checkinService.sendPendingCheckoutsToBreeze()
         } catch (e: Exception) {
             Log.e(TAG, "Pushing pending data failed", e)
         }
@@ -218,13 +232,15 @@ class SyncEngine private constructor(private val context: Context) {
         } catch (e: Exception) {
             _status.value.pendingPushCount
         }
-        _status.value = SyncStatus(
-            breezeReachable = reachable,
-            lastAttendanceSync = if (attendanceSynced) LocalDateTime.now() else _status.value.lastAttendanceSync,
-            lastPeopleSync = lastPeopleSync,
-            pendingPushCount = pendingCount,
-            pushRejections = CheckinService.pushRejections()
-        )
+        _status.update {
+            SyncStatus(
+                breezeReachable = reachable,
+                lastAttendanceSync = if (attendanceSynced) LocalDateTime.now() else it.lastAttendanceSync,
+                lastPeopleSync = lastPeopleSync,
+                pendingPushCount = pendingCount,
+                pushRejections = CheckinService.pushRejections()
+            )
+        }
     }
 
     companion object {

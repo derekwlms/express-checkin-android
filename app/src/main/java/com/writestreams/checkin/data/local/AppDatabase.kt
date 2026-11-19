@@ -9,7 +9,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.writestreams.checkin.service.SettingsService
 
-@Database(entities = [Person::class, Checkin::class], version = 4)
+@Database(entities = [Person::class, Checkin::class], version = 5)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun personDao(): PersonDao
@@ -72,6 +72,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        // v5: pending check-outs are queued on the check-in row until Breeze confirms them.
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE checkins ADD COLUMN checkoutDateTime TEXT")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val appContext = context.applicationContext
@@ -80,7 +87,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app_database"
                 )
-                    .addMigrations(MIGRATION_2_3, migration3To4(appContext))
+                    .addMigrations(MIGRATION_2_3, migration3To4(appContext), MIGRATION_4_5)
                     .build()
                 INSTANCE = instance
                 instance

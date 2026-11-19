@@ -63,4 +63,32 @@ class AttendanceMergeTest {
         assertEquals(listOf("999"), actions.fetch)
         assertTrue(actions.record.isEmpty())
     }
+
+    private fun checkedOut(personId: String, wasSynced: Boolean) =
+        Checkin(personId, instanceId, now, "1234", "3",
+            breezeSyncDateTime = if (wasSynced) now else null, checkoutDateTime = now)
+
+    @Test
+    fun queuedCheckoutStillInBreezeIsKeptAndNotReRecorded() {
+        // Checked out here while offline: Breeze still lists the person
+        val row = checkedOut("100", wasSynced = true)
+        val actions = AttendanceMerge.plan(listOf(row), setOf("100"), setOf("100"))
+        assertTrue(actions.remove.isEmpty())
+        assertTrue(actions.record.isEmpty())
+        assertTrue(actions.markSynced.isEmpty())
+    }
+
+    @Test
+    fun queuedCheckoutGoneFromBreezeIsRemoved() {
+        val row = checkedOut("100", wasSynced = true)
+        val actions = AttendanceMerge.plan(listOf(row), setOf("100"), emptySet())
+        assertEquals(listOf(row), actions.remove)
+    }
+
+    @Test
+    fun unsentCheckinThenCheckoutIsNeverMarkedSynced() {
+        val row = checkedOut("100", wasSynced = false)
+        val actions = AttendanceMerge.plan(listOf(row), setOf("100"), setOf("100"))
+        assertTrue(actions.markSynced.isEmpty())
+    }
 }

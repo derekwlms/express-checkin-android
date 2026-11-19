@@ -51,14 +51,18 @@ class CheckinService(private val context: Context) {
         // email), keyed by offline id. Automatic sync cycles skip these rather than resend
         // the same bad request every minute; a manual send retries them. Process-wide, so
         // an app restart also gives them another try.
-        private val rejectedNewPersons = ConcurrentHashMap<String, String>()
+        private data class Rejection(val name: String, val reason: String)
+        private val rejectedNewPersons = ConcurrentHashMap<String, Rejection>()
 
         // Families whose members were all pushed but could not be linked in Breeze
         // (the local link is gone at that point, so they must be linked by hand).
         private val unlinkedFamilies = ConcurrentHashMap<String, String>()
 
         fun pushRejections(): List<String> =
-            rejectedNewPersons.values.sorted() + unlinkedFamilies.values.sorted()
+            rejectedNewPersons.values.map { "${it.name}: ${it.reason}" }.sorted() + unlinkedFamilies.values.sorted()
+
+        // Rejection reasons keyed by (offline) person id, for marking items on the Pending tab
+        fun rejectionsById(): Map<String, String> = rejectedNewPersons.mapValues { it.value.reason }
     }
 
     init {
@@ -128,10 +132,34 @@ class CheckinService(private val context: Context) {
         }
     }
 
+    // The check-out is queued locally first, so it isn't lost if Breeze can't be reached;
+    // the sync engine retries queued check-outs until Breeze confirms them.
     fun checkOutPerson(person: Person) {
         CoroutineScope(Dispatchers.IO).launch {
-            repository.checkOut(person.id)
-            checkOutWithBreeze(person, getBreezeInstanceId())
+            val instanceId = repository.checkOut(person.id) ?: getBreezeInstanceId()
+            if (checkOutWithBreeze(person.id, instanceId)) {
+                repository.deleteCheckin(person.id, instanceId)
+            }
+        }
+    }
+
+    suspend fun sendPendingCheckoutsToBreeze(): String {
+        return try {
+            val pendingCheckouts = repository.getPendingCheckouts()
+            var sentCount = 0
+            pendingCheckouts.forEach { checkout ->
+                // A person still on an offline id was never in Breeze, so there's nothing to remove there
+                if (checkout.personId.startsWith(OFFLINE_BREEZE_ID_PREFIX) ||
+                    checkOutWithBreeze(checkout.personId, checkout.instanceId)) {
+                    repository.deleteCheckin(checkout.personId, checkout.instanceId)
+                    sentCount++
+                }
+            }
+            if (pendingCheckouts.isEmpty()) "" else ", $sentCount of ${pendingCheckouts.count()} check-outs"
+        } catch (e: Exception) {
+            Log.e("CheckinService.sendPendingCheckoutsToBreeze",
+                "Exception sending check-outs, probably offline", e)
+            ", unable to send check-outs, probably offline"
         }
     }
 
@@ -174,6 +202,7 @@ class CheckinService(private val context: Context) {
             if (isBreezeAccessible()) {
                 message += sendPendingNewPersonsToBreeze(retryRejected = true)
                 message += sendPendingCheckinsToBreeze()
+                message += sendPendingCheckoutsToBreeze()
             } else {
                 message = "Unable to access Breeze; cannot send pending data now"
             }
@@ -222,7 +251,7 @@ class CheckinService(private val context: Context) {
                 Log.i("sendPendingNewPersonsToBreeze", "adding $person, $guest")
                 val rejection = addGuestToBreeze(guest)
                 if (rejection != null) {
-                    rejectedNewPersons[offlineId] = "${person.first_name} ${person.last_name}: $rejection"
+                    rejectedNewPersons[offlineId] = Rejection(person.fullName(), rejection)
                     return@forEach
                 }
                 rejectedNewPersons.remove(offlineId)
@@ -259,6 +288,7 @@ class CheckinService(private val context: Context) {
         if (isBreezeAccessible()) {
             sendPendingNewPersonsToBreeze()
             sendPendingCheckinsToBreeze()
+            sendPendingCheckoutsToBreeze()
         }
         repository.purgeSyncedCheckinsFromOtherInstances(currentInstanceId)
     }
@@ -338,14 +368,20 @@ class CheckinService(private val context: Context) {
         }
     }
 
-    private suspend fun checkOutWithBreeze(person: Person, breezeInstanceId: String) {
-        Log.d("checkOutWithBreeze", "Checking out ${person.first_name} ${person.last_name} for event $breezeInstanceId")
-        try {
-//        apiService.checkIn(person.id, breezeInstanceId, "out")
-            apiService.deleteCheckin(person.id, breezeInstanceId)
+    // Returns true once Breeze has confirmed removing the attendance record.
+    private suspend fun checkOutWithBreeze(personId: String, breezeInstanceId: String): Boolean {
+        Log.d("checkOutWithBreeze", "Checking out person $personId for event $breezeInstanceId")
+        return try {
+            val response = apiService.deleteCheckin(personId, breezeInstanceId)
+            if (!response.isSuccessful) {
+                Log.e("checkOutWithBreeze",
+                    "deleteCheckin API returned ${response.code()} for person id $personId")
+            }
+            response.isSuccessful
         } catch (e: Exception) {
             Log.e("checkOutWithBreeze",
-                "Exception calling deleteCheckin API for person id ${person.id}", e)
+                "Exception calling deleteCheckin API for person id $personId", e)
+            false
         }
     }
 

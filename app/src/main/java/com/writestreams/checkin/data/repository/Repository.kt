@@ -1,6 +1,5 @@
 package com.writestreams.checkin.data.repository
 
-import com.writestreams.checkin.service.OfflineFamily
 import android.content.Context
 import com.writestreams.checkin.data.local.AppDatabase
 import com.writestreams.checkin.data.local.Checkin
@@ -8,10 +7,14 @@ import com.writestreams.checkin.data.local.CheckinDao
 import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.data.local.PersonDao
 import com.writestreams.checkin.data.network.BreezeChmsApiService
+import com.writestreams.checkin.service.OfflineFamily
+import com.writestreams.checkin.service.PendingItem
+import com.writestreams.checkin.service.PendingItems
 import com.writestreams.checkin.service.SettingsService
 import com.writestreams.checkin.util.ApiKeys.BREEZE_API_URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -124,29 +127,26 @@ class Repository(private val context: Context) {
 
     suspend fun getCheckedInPersons(): List<Person> {
         return withContext(Dispatchers.IO) {
-            attachPersons(checkinDao.getForInstance(currentInstanceId()))
-        }
-    }
-
-    suspend fun getPendingCheckedInPersons(): List<Person> {
-        return withContext(Dispatchers.IO) {
-            attachPersons(checkinDao.getPendingForInstance(currentInstanceId()))
+            attachPersons(checkinDao.getCheckedInForInstance(currentInstanceId()))
         }
     }
 
     // Observable variants: Room re-emits whenever the checkins table changes,
     // so screens update when the sync engine (or a check-in here) writes to the database
     fun observeCheckedInPersons(): Flow<List<Person>> {
-        return checkinDao.observeForInstance(currentInstanceId())
+        return checkinDao.observeCheckedInForInstance(currentInstanceId())
             .map { attachPersons(it) }
             .flowOn(Dispatchers.IO)
     }
 
-    fun observePendingCheckedInPersons(): Flow<List<Person>> {
-        return checkinDao.observePendingForInstance(currentInstanceId())
-            .map { attachPersons(it) }
-            .flowOn(Dispatchers.IO)
+    // Everything not yet in Breeze (new people, check-ins, check-outs; any event), one item per person
+    fun observePendingItems(): Flow<List<PendingItem>> {
+        return combine(checkinDao.observeUnsent(), personDao.observePendingNewPersons()) { checkins, newPersons ->
+            PendingItems.build(checkins, newPersons, ::nameOf, currentInstanceId())
+        }.flowOn(Dispatchers.IO)
     }
+
+    private fun nameOf(personId: String): String? = personDao.getPersonById(personId)?.fullName()
 
     // Join checkin rows to their persons, carrying check-in state on the
     // transient Person fields for display
@@ -185,9 +185,11 @@ class Repository(private val context: Context) {
         }
     }
 
+    // Number of people with anything not yet in Breeze (matches the Pending tab)
     suspend fun countPendingPushes(): Int {
         return withContext(Dispatchers.IO) {
-            checkinDao.countPending() + personDao.countPendingNewPersons()
+            PendingItems.build(checkinDao.getUnsent(), personDao.getPendingNewPersons(),
+                ::nameOf, currentInstanceId()).size
         }
     }
 
@@ -203,9 +205,18 @@ class Repository(private val context: Context) {
         }
     }
 
-    suspend fun checkOut(personId: String) {
-        withContext(Dispatchers.IO) {
-            checkinDao.delete(personId, currentInstanceId())
+    // Queues a check-out for the current event: the row stays, marked, until Breeze confirms it.
+    // Returns the instance id of the marked row, or null if the person wasn't checked in here.
+    suspend fun checkOut(personId: String): String? {
+        return withContext(Dispatchers.IO) {
+            val instanceId = currentInstanceId()
+            if (checkinDao.markCheckedOut(personId, instanceId, LocalDateTime.now()) > 0) instanceId else null
+        }
+    }
+
+    suspend fun getPendingCheckouts(): List<Checkin> {
+        return withContext(Dispatchers.IO) {
+            checkinDao.getPendingCheckouts()
         }
     }
 

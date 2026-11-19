@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PersonDao {
@@ -20,8 +21,8 @@ interface PersonDao {
     @Query("SELECT * FROM persons WHERE id LIKE 'OL_%'")   // OFFLINE_BREEZE_ID_PREFIX = "OL_"
     fun getPendingNewPersons(): List<Person>
 
-    @Query("SELECT COUNT(*) FROM persons WHERE id LIKE 'OL_%'")
-    fun countPendingNewPersons(): Int
+    @Query("SELECT * FROM persons WHERE id LIKE 'OL_%'")
+    fun observePendingNewPersons(): Flow<List<Person>>
 
     @Query("SELECT id FROM persons")
     fun getAllPersonIds(): List<String>

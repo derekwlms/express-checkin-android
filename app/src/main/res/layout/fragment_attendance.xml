@@ -12,10 +12,10 @@
         android:orientation="horizontal">
 
         <RadioButton
-            android:id="@+id/localRadioButton"
+            android:id="@+id/allRadioButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Local"
+            android:text="All"
             android:checked="true" />
 
         <RadioButton
@@ -23,14 +23,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Pending" />
-
-        <RadioButton
-            android:id="@+id/breezeRadioButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Breeze" />
     </RadioGroup>
 
+    <!-- Sync freshness, so the All list can be trusted (or not) at a glance -->
+    <TextView
+        android:id="@+id/syncStatusTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="4dp"
+        android:paddingBottom="8dp"
+        android:textSize="14sp" />
 
     <LinearLayout
         android:layout_width="match_parent"

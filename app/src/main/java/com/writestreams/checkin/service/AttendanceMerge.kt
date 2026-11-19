@@ -9,7 +9,8 @@ object AttendanceMerge {
 
     data class Actions(
         val markSynced: List<Checkin>,   // local pending rows Breeze already has
-        val remove: List<Checkin>,       // local synced rows checked out remotely
+        val remove: List<Checkin>,       // local rows no longer in Breeze: checked out remotely, or a
+                                         // local check-out that needs no push
         val record: List<String>,        // known person ids to record as checked in locally
         val fetch: List<String>          // unknown person ids to fetch from Breeze, then record
     )
@@ -21,10 +22,12 @@ object AttendanceMerge {
     ): Actions {
         val localCheckinIds = localCheckins.map { it.personId }.toSet()
         val markSynced = localCheckins.filter {
-            it.breezeSyncDateTime == null && it.personId in breezeCheckedInIds
+            it.breezeSyncDateTime == null && it.checkoutDateTime == null && it.personId in breezeCheckedInIds
         }
+        // Rows checked out here stay until Breeze no longer has the person; unsent
+        // check-ins (the outbox) are never removed here.
         val remove = localCheckins.filter {
-            it.breezeSyncDateTime != null && it.personId !in breezeCheckedInIds
+            it.personId !in breezeCheckedInIds && (it.breezeSyncDateTime != null || it.checkoutDateTime != null)
         }
         val newIds = breezeCheckedInIds.filterNot { it in localCheckinIds }
         return Actions(

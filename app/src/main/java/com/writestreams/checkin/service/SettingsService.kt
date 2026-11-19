@@ -24,6 +24,13 @@ class SettingsService(private val context: Context) {
             return (BREEZE_INSTANCE_ID_START + (2 * weeksFromStartDate)).toString()
         }
 
+        // The Sunday an instance id belongs to (the inverse of computeBreezeInstanceId).
+        fun instanceDate(instanceId: String): LocalDate? {
+            val offset = instanceId.toIntOrNull()?.minus(BREEZE_INSTANCE_ID_START) ?: return null
+            if (offset < 0 || offset % 2 != 0) return null
+            return BREEZE_INSTANCE_ID_START_DATE.plusWeeks((offset / 2).toLong())
+        }
+
         // The single source for "which event instance is current" - preferring the
         // stored value (which the Settings date picker can override) over today's.
         fun currentBreezeInstanceId(context: Context): String {

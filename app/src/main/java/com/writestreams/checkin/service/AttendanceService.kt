@@ -3,7 +3,6 @@ package com.writestreams.checkin.service
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import com.writestreams.checkin.data.local.Person
 import com.writestreams.checkin.data.network.BreezeChmsApiService
 import com.writestreams.checkin.data.network.MailgunService
 import com.writestreams.checkin.util.ApiKeys
@@ -88,27 +87,6 @@ class AttendanceService(private val context: Context) {
                     Toast.makeText(context, "Error emailing attendance list: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
                 Log.e("AttendanceService.emailAttendanceList exception", e.message, e)
-            }
-        }
-    }
-
-    suspend fun getBreezeCheckedInPersons(): List<Person> {
-        val instanceId = getBreezeInstanceId()
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = breezeApiService.getAttendance(instanceId)
-                if (response.isSuccessful) {
-                    response.body()?.map { it.asPerson() } ?: emptyList()
-                } else {
-                    emptyList()
-                }
-            } catch (e: Exception) {
-                Log.e("getBreezeCheckedInPersons - breezeApiService.getAttendance",
-                    "Exception getting checked-in persons, probably offline", e)
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Error getting Breeze data. Is it offline?", Toast.LENGTH_SHORT).show()
-                }
-                emptyList()
             }
         }
     }
