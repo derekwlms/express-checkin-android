@@ -101,10 +101,6 @@ class SettingsFragment : Fragment() {
             showBreezeInstanceId()
         }
 
-        val resetCheckinsButton: Button = view.findViewById(R.id.resetCheckinsButton)
-        resetCheckinsButton.setOnClickListener {
-            confirmThenResetCheckins()
-        }
         val getUpdatesButton: Button = view.findViewById(R.id.getUpdatesButton)
         getUpdatesButton.setOnClickListener {
             confirmThenFetchPersons()
@@ -132,17 +128,6 @@ class SettingsFragment : Fragment() {
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
-    }
-
-    private fun confirmThenResetCheckins() {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Confirm Reset")
-            .setMessage("Are you sure you want to reset all check-ins?")
-            .setPositiveButton("Yes") { _, _ ->
-                resetCheckins()
-            }
-            .setNegativeButton("No", null)
-            .show()
     }
 
     private fun confirmThenFetchPersons() {
@@ -176,23 +161,6 @@ class SettingsFragment : Fragment() {
             }
             .setNegativeButton("Cancel", null)
             .show()
-    }
-
-    private fun resetCheckins() {
-        lifecycleScope.launch {
-            try {
-                repository.resetAllCheckins()
-                Toast.makeText(
-                    requireContext(),
-                    "All check-ins have been reset",
-                    Toast.LENGTH_SHORT
-                ).show()
-            } catch (e: Exception) {
-                Log.e("SettingsFragment", "Error resetting checkins", e)
-                Toast.makeText(requireContext(), "Error resetting checkins", Toast.LENGTH_SHORT)
-                    .show()
-            }
-        }
     }
 
     private var refreshRequested = false

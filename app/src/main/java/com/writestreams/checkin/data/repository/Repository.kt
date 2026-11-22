@@ -92,13 +92,6 @@ class Repository(private val context: Context) {
         return persons.size
     }
 
-    suspend fun resetAllCheckins() {
-        return withContext(Dispatchers.IO) {
-            checkinDao.deleteAll()
-            checkinCounterMutex.withLock { lastIssuedCounter = 0 }
-        }
-    }
-
     suspend fun getCachedPersons(): List<Person> {
         return withContext(Dispatchers.IO) {
             personDao.getAllPersons()
