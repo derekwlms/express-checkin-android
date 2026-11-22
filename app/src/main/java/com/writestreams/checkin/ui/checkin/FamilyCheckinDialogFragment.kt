@@ -17,6 +17,7 @@ import com.writestreams.checkin.databinding.DialogFamilyCheckinBinding
 import com.writestreams.checkin.databinding.ItemChildBinding
 import com.writestreams.checkin.R
 import com.writestreams.checkin.service.CheckinService
+import com.writestreams.checkin.util.Surprises
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -67,7 +68,13 @@ class FamilyCheckinDialogFragment(private val person: Person) : DialogFragment()
                 val checkedFamilyMembers = adapter.getCheckedFamilyMembers()
                 checkinService.checkinFamily(familyMembers, checkedFamilyMembers,
                     getNewChildren(), selectedPhoneNumber)
+                val isAaron = Surprises.isAaronAnderson(person.first_name, person.last_name) ||
+                    checkedFamilyMembers.any {
+                        Surprises.isAaronAnderson(it.details.first_name, it.details.last_name)
+                    }
+                val activity = requireActivity()
                 dismiss()
+                if (isAaron) Surprises.showAaronGreeting(activity)
             }
         }
 
